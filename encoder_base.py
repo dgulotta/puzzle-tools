@@ -14,8 +14,10 @@ class Encoder:
             if t is None:
                 if len(l)==0 or l[-1]!=self.wsep:
                     l.append(self.wsep)
-            else:
+            elif isinstance(t,str):
                 l.append(t)
+            else:
+                l.extend(t)
         return self.sep.join(l)
 
 class Decoder:

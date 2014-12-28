@@ -8,9 +8,11 @@ Features
 The following modules are included:
 * amino - utilities for working with nucleotide and amino acid sequences
 * braille - utilities for working with Braille
+* code\_misc - other codes
 * imdb - generates lists of well-known actors, directors, movies, and television shows using data from IMDb
 * normalize - attempts to convert unicode strings to alphanumeric strings in a reasonable way
 * morse - translates to and from Morse code
+* semaphore - translates to and from flag semaphore
 
 Required software
 =================

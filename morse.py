@@ -5,6 +5,14 @@ Encoder and decoder for Morse code.
 import re
 import encoder_base
 
+_dash_hyphen_re = re.compile('[\u2010\u2011\u2012\u2013\u2014\u2015\u2043\u2212\uff0d]')
+
+def dash_to_hyphen(s):
+    """
+    Replaces various kinds of dash characters with hyphens.
+    """
+    return _dash_hyphen_re.sub('-',s)
+
 alpha_to_morse = {
     'A' : '.-',
     'B' : '-...',
