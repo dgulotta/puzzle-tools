@@ -32,7 +32,7 @@ class NucleotideSequence:
         >>> n.to_amino()
         AminoSequence('DIA')
         >>> n.to_amino().long_form()
-        'ASP ILE ALA'
+        ['ASP', 'ILE', 'ALA']
     '''
 
     def __init__(self, seq):
@@ -40,12 +40,10 @@ class NucleotideSequence:
         Creates a new nucleotide sequence.  seq may be either a string
         (both T's and U's are allowed) or another nucleotide sequence.
         '''
-        if isinstance(seq, str):
-            self.nucleotides = seq.upper().replace('U','T')
-        elif isinstance(seq, NucleotideSequence):
+        if isinstance(seq, NucleotideSequence):
             self.nucleotides = seq.nucleotides
-        else:
-            raise TypeError
+        else: 
+            self.nucleotides = ''.join(seq).upper().replace('U','T')
 
     def conjugate(self):
         '''
@@ -100,7 +98,7 @@ class AminoSequence(object):
 
         >>> a = AminoSequence('ASDF')
         >>> a.long_form()
-        'ALA SER ASP PHE'
+        ['ALA', 'SER', 'ASP', 'PHE']
         >>> AminoSequence.from_long_form('ALA SER ASP PHE')
         AminoSequence('ASDF')
     '''
@@ -147,18 +145,16 @@ class AminoSequence(object):
         Constructs a new amino acid sequence.  seq can be either another amino
         acid sequence, or a string of one-letter amino acid abbreviations.
         '''
-        if isinstance(seq, str):
-            self.acids = seq.upper()
-        elif isinstance(seq, AminoSequence):
+        if isinstance(seq, AminoSequence):
             self.acids = seq.acids
         else:
-            raise TypeError
+            self.acids = ''.join(seq).upper()
 
     def long_form(self):
         '''
         Returns the three letter abbreviations for the sequence of amino acids.
         '''
-        return ' '.join(self.one_to_three[i] for i in self.acids)
+        return [self.one_to_three[i] for i in self.acids]
 
     def __str__(self):
         return self.acids
@@ -169,10 +165,11 @@ class AminoSequence(object):
     @staticmethod
     def from_long_form(seq):
         '''
-        Converts a string of three-letter amino acid abbreviations into an AminoAcidSequence.
+        Converts a string or list of three-letter amino acid abbreviations into an AminoSequence.
         '''
-        seq = re.sub('[^A-Z]+','',seq.upper())
-        short_seq = ''.join(AminoSequence.three_to_one[i] for i in _groups_of_three(seq))
+        if isinstance(seq, str):
+            seq = _groups_of_three(re.sub('[^A-Z]+','',seq.upper()))
+        short_seq = ''.join(AminoSequence.three_to_one[i] for i in seq)
         return AminoSequence(short_seq)
 
 genetic_code_tmp = (
@@ -242,6 +239,6 @@ genetic_code_tmp = (
     ('GGG' , 'GLY'),
 )
 
-genetic_code = dict((x[0].replace('U','T'),AminoSequence.three_to_one[x[1]]) for x in genetic_code_tmp)
+genetic_code = {x[0].replace('U','T') : AminoSequence.three_to_one[x[1]] for x in genetic_code_tmp}
 
 del genetic_code_tmp
