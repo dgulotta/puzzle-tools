@@ -96,7 +96,9 @@ class IMDb:
                     return
             else:
                 d = movies
-            d[self.parse_movie(k)]+=v
+            mn = self.parse_movie(k)
+            if v>d[mn]:
+                d[mn]=v
         for k,v in self.counts.items():
             add_count(k,v)
         with self.open('aka-titles') as f:
@@ -105,14 +107,15 @@ class IMDb:
                 try:
                     if len(l)>1:
                         if l.startswith(' '):
-                            g = self._aka_re.match(l).groups()
-                            add_count(g[0],count)
+                            if count>=1200:
+                                g = self._aka_re.match(l).groups()
+                                add_count(g[0],count)
                         else:
                             count = self.counts.get(l.strip(),0)
                 except(AttributeError, KeyError):
                     pass
         self.write_list('imdb_movies.txt',movies,4000)
-        self.write_list('imdb_tv.txt',tv,2000)
+        self.write_list('imdb_tv.txt',tv,1200)
 
     def do_directors(self):
         directors = defaultdict(lambda : 0)
