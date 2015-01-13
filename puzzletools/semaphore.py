@@ -1,4 +1,4 @@
-import encoder_base
+from puzzletools import encoder_base
 
 directions_unicode = list('\u2192\u2197\u2191\u2196\u2190\u2199\u2193\u2198')
 directions_phonepad = list('63214789')
@@ -56,11 +56,14 @@ class SemaphoreEncoder(encoder_base.Encoder):
         Keyword arguments:
         ``sep`` - Character separator.  Default is ' '.
         ``wsep`` - Word separator.  Default is '/'.
-        ``output_mode`` - The representation of semaphore directions.   Supported input modes are:
+        ``output_mode`` - The representation of semaphore directions.   Supported input modes include:
         * ``directions_numpad`` - represents directions by numpad keys (down left = 1, down = 2, etc)
         * ``directions_phonepad`` - represents directions by telephone pad keys (up left = 1, up = 2, etc)
         * ``directions_rogue`` - represents directions by Rogue keys (left = h, down = j, etc)
         * ``directions_unicode`` (default) - represents directions by Unicode arrow characters (left = U+2190, up = U+2191, etc)
+        In addition, you can specify a custom input mode as a list of 8 characters.
+        The direction characters should be listed in counterclockwise order starting
+        with right.
         '''
         o = kwargs.get('output_mode',directions_unicode)
         self.mapping = { k : ''.join(o[directions_unicode.index(c)] for c in v) for k,v in alpha_to_semaphore.items() }
@@ -95,7 +98,7 @@ class SemaphoreDecoder(encoder_base.Decoder):
     '''
     Decodes text from semaphore.
     
-        >>> dec = SemaphoreDecoder()
+        >>> dec = SemaphoreDecoder(input_mode=directions_numpad)
         >>> print dec('62 19 21 23 / 34 29 61 21 48 41 47 64 29')
         FLAG SEMAPHORE
     '''
@@ -105,7 +108,7 @@ class SemaphoreDecoder(encoder_base.Decoder):
         Keyword arguments:
         ``sep`` - Character separator.  Default is ' '.
         ``wsep`` - Word separator.  Default is '/'.
-        ``input_mode`` - The representation of semaphore directions.   The supported representations are the
+        ``input_mode`` - The representation of semaphore directions.   The representations are the
         same as for ``SemaphoreEncoder``.  The default is ``directions_numpad``.
         '''
         i = kwargs.get('input_mode',directions_numpad)

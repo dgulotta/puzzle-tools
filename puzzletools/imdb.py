@@ -1,18 +1,49 @@
 '''
-A script for generating a list of movies and actors from text files
-provided by IMDb.
+A script for generating a list of movies, tv shows, actors, and directors from
+text files provided by IMDb.
 
-The IMDb text files can be found at http://www.imdb.com/interfaces#plain.
+The script can either download the IMDb text files from one of the ftp mirrors
+or use a local copy.  If you want to download the files yourself, they can be
+found at at http://www.imdb.com/interfaces#plain.
 The files that are used by this script are actors, actresses, aka-titles,
 and directors, and ratings.
 
-To generate the lists, download the files and then run
-python imdb.py [input_path] [output_path]
+Example usage:
+To download the files from an ftp server and generate all of the lists in the
+current directory, run
+python imdb.py --ftp
 '''
 
 from collections import defaultdict
-from normalize import normalize_alnum
-import codecs, gzip, math, re
+from puzzletools.normalize import normalize_alnum
+import codecs, gzip, math, re, io, ftplib
+import argparse, random
+
+class LocalOpener:
+    def __init__(self,path):
+        self.path=path
+
+    def __call__(self,s):
+        fn='%s/%s.list'%(self.path,s)
+        try:
+            return codecs.open(fn,'r','iso-8859-1')
+        except FileNotFoundError:
+            pass
+        return gzip.open(fn+'.gz','rt',encoding='iso-8859-1')
+
+class FTPOpener:
+    def __init__(self,site,path):
+        self.site=site
+        self.path=path
+
+    def __call__(self,s):
+        f = io.BytesIO()
+        with ftplib.FTP(self.site) as ftp:
+            ftp.login()
+            ftp.cwd(self.path)
+            ftp.retrbinary("RETR %s.list.gz"%s,f.write)
+        f.seek(0)
+        return codecs.getreader('iso-8859-1')(gzip.GzipFile(fileobj=f,mode='rb'))
 
 class IMDb:
 
@@ -21,14 +52,15 @@ class IMDb:
     _actors_re = re.compile(r'^(.*?)\t+(.*?)(?:  \[(.*?)\])?(?:  <(\d+)>)?$')
     _directors_re = re.compile(r'^(.*?)\t+(.*?)(?:  .*)?$')
     _aka_re = re.compile(r'^   \(aka (.*)\)\s+\(USA\)(?: \(short title\))?(?: \(imdb display title\))?$')
+    _ftp_sites = [
+        ('ftp.fu-berlin.de','/pub/misc/movies/database/'),
+        ('ftp.funet.fi','/pub/mirrors/ftp.imdb.com/pub/'),
+        ('ftp.sunet.se','/pub/tv+movies/imdb/'),
+    ]
 
-    def __init__(self,idir=None,odir=None):
+    def __init__(self,opener,odir):
         self.counts = {}
-        if idir is None:
-            idir = '.'
-        if odir is None:
-            odir = idir
-        self.idir = idir
+        self.open=opener
         self.odir = odir
         self.weights = []
         f = math.exp(-.2)
@@ -46,6 +78,7 @@ class IMDb:
     def parse_movie(s):
         return normalize_alnum(s[:s.find(' (')])
 
+    '''
     def open(self,s):
         fn='%s/%s.list'%(self.idir,s)
         try:
@@ -53,6 +86,7 @@ class IMDb:
         except FileNotFoundError:
             pass
         return gzip.open(fn+'.gz','rt',encoding='iso-8859-1')
+    '''
 
     def skip_header(self,f,s):
         for l in f:
@@ -139,17 +173,31 @@ class IMDb:
             for v, k in l:
                 print("%s\t%d"%(k,v),file=f)
 
-def usage():
-    print("usage: imdb.py [input_path] [output_path]",file=sys.stderr)
-    sys.exit(64)
-
-
 if __name__=='__main__':
-    import sys
-    if len(sys.argv)>3:
-        usage()
-    i = IMDb(*sys.argv[1:])
+    parser = argparse.ArgumentParser()
+    inputs = parser.add_mutually_exclusive_group()
+    inputs.add_argument('--indir',help='get data files from the given local directory')
+    inputs.add_argument('--ftp',help='get data files from an ftp mirror',action='store_true')
+    parser.add_argument('--outdir',help='directory to which the lists should be saved (default is the current directory)',default='.')
+    parser.add_argument('--actors',help='generate a list of actors (if no lists are specified, all will be generated)',action='store_true')
+    parser.add_argument('--directors',help='generate a list of directors',action='store_true')
+    parser.add_argument('--movies',help='generate lists of movies and tv shows',action='store_true')
+    args = parser.parse_args()
+    if args.indir is not None:
+        opener = LocalOpener(args.indir)
+    elif args.ftp:
+        opener = FTPOpener(*random.choice(IMDb._ftp_sites))
+    else:
+        parser.error('either --indir or --ftp is required')
+    if not (args.actors or args.directors or args.movies):
+        args.actors=True
+        args.directors=True
+        args.movies=True
+    i = IMDb(opener,args.outdir)
     i.load_counts()
-    i.do_movies()
-    i.do_directors()
-    i.do_actors()
+    if args.movies:
+        i.do_movies()
+    if args.directors:
+        i.do_directors()
+    if args.actors:
+        i.do_actors()

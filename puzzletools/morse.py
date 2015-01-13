@@ -3,7 +3,7 @@ Encoder and decoder for Morse code.
 '''
 
 import re
-import encoder_base
+from puzzletools import encoder_base
 
 _dash_hyphen_re = re.compile('[\u2010\u2011\u2012\u2013\u2014\u2015\u2043\u2212\uff0d]')
 
