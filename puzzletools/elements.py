@@ -65,7 +65,7 @@ class ChemicalElement(metaclass=EnumerationMeta):
         (52,'Te','Tellurium'),
         (53,'I','Iodine'),
         (54,'Xe','Xenon'),
-        (55,'Cs','Caesium'),
+        (55,'Cs','Cesium'),
         (56,'Ba','Barium'),
         (57,'La','Lanthanum'),
         (58,'Ce','Cerium'),
