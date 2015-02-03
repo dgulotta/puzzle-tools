@@ -1,0 +1,26 @@
+<html>
+<head>
+<title>Acrostic Helper</title>
+<script type="text/javascript" src="acrostic.js"></script>
+</head>
+<body>
+<div id="setup">
+<h4>Clues</h4>
+<p>Enter the clues on the left (optional).  Enter the numbers underneath the blanks on the right.  Use 0 if a blank is not used in the final message.</p>
+<textarea id="clues"></textarea>
+<textarea id="cluepattern"></textarea>
+<h4>Message</h4>
+<p>If you know where spaces (or punctuation other than a period) occurs in the message, you can enter that information below.  A period denotes a blank.  For example, if you know that the message is a 3-letter word followed by a five-letter word, you would enter <tt>... .....</tt> below.</p>
+<textarea id="messagepattern"></textarea>
+<br/><button type="button" id="start">Start solving</button>
+</div>
+<div id="solve" style="display:none">
+<h4>Clues</h4>
+<textarea id="answers"></textarea>
+<h4>Message</h4>
+<textarea id="message"></textarea>
+<br/><button type="button" id="restart">Start over</button>
+</div>
+</body>
+</html>
+

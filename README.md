@@ -5,7 +5,7 @@ Some tools for solving MIT Mystery Hunt puzzles
 
 Features
 ========
-The following modules are included:
+The following Python modules are included:
 * amino - utilities for working with nucleotide and amino acid sequences
 * braille - utilities for working with Braille
 * code\_misc - other codes
@@ -15,8 +15,12 @@ The following modules are included:
 * morse - translates to and from Morse code
 * semaphore - translates to and from flag semaphore
 
+The following interactive web pages are included:
+* acrostic - an aid for solving anacrostic puzzles
+
 Required software
 =================
-Puzzle-tools is written in Python 3.  It is tested with Python 3.3 but might also
-work with other versions.  Some modules may use the following packages:
+The Python modules are written in Python 3.  They are tested with version 3.3
+but might also work with other versions.  Some modules may use the following
+packages:
 * unidecode
