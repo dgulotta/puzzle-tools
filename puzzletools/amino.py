@@ -2,6 +2,7 @@
 Utilities for working with nucleotide and amino acid sequences.
 '''
 
+from puzzletools.enumeration import EnumerationMeta
 import re
 
 def amino_encode(s):
@@ -92,6 +93,48 @@ class NucleotideSequence:
     def __repr__(self):
         return "NucleotideSequence(%s)"%repr(self.nucleotides)
 
+class AminoAcid(metaclass=EnumerationMeta):
+
+    fields = ['letter','abbr','name']
+
+    display_key = 'abbr'
+
+    data = [
+        ('A','Ala','Alanine'),
+        ('C','Cys','Cysteine'),
+        ('D','Asp','Aspartic acid'),
+        ('E','Glu','Glutamic acid'),
+        ('F','Phe','Phenylalanine'),
+        ('G','Gly','Glycine'),
+        ('H','His','Histidine'),
+        ('I','Ile','Isoleucine'),
+        ('K','Lys','Lysine'),
+        ('L','Leu','Leucine'),
+        ('M','Met','Methionine'),
+        ('N','Asn','Asparagine'),
+        ('P','Pro','Proline'),
+        ('Q','Gln','Glutamine'),
+        ('R','Arg','Arginine'),
+        ('S','Ser','Serine'),
+        ('T','Thr','Threonine'),
+        ('V','Val','Valine'),
+        ('W','Trp','Tryptophan'),
+        ('Y','Tyr','Tyrosine'),
+    ]
+
+    data_extra = [
+        # special amino acids
+        ('U','Sec','Selenocysteine'),
+        ('O','Pyl','Pyrrolysine'),
+        # wildcards
+        ('B','Asx','Aspargine,Aspartic acid'),
+        ('Z','Glx','Glutamine,Glutamic acid'),
+        ('J','Xle','Leucine,Isoleucine'),
+        ('X','Xaa','Unknown'),
+        # stop codon
+        ('#','###','Stop codon')
+    ]
+
 class AminoSequence(object):
     '''
     Represents a sequence of amino acids.
@@ -103,42 +146,8 @@ class AminoSequence(object):
         AminoSequence('ASDF')
     '''
 
-    amino_acids = (
-        # normal amino acids
-        ('A' , 'ALA'),
-        ('C' , 'CYS'),
-        ('D' , 'ASP'),
-        ('E' , 'GLU'),
-        ('F' , 'PHE'),
-        ('G' , 'GLY'),
-        ('H' , 'HIS'),
-        ('I' , 'ILE'),
-        ('K' , 'LYS'),
-        ('L' , 'LEU'),
-        ('M' , 'MET'),
-        ('N' , 'ASN'),
-        ('P' , 'PRO'),
-        ('Q' , 'GLN'),
-        ('R' , 'ARG'),
-        ('S' , 'SER'),
-        ('T' , 'THR'),
-        ('V' , 'VAL'),
-        ('W' , 'TRP'),
-        ('Y' , 'TYR'),
-        # special amino acids
-        ('U' , 'SEC'),
-        ('O' , 'PYL'),
-        # wildcards
-        ('B' , 'ASX'),
-        ('Z' , 'GLX'),
-        ('J' , 'XLE'),
-        ('X' , 'XAA'),
-        # stop codon
-        ('#' , '###')
-    )
-
-    one_to_three = dict(amino_acids)
-    three_to_one = dict(map(reversed,amino_acids))
+    one_to_three = { v.letter : v.abbr.upper() for v in AminoAcid.items_extended }
+    three_to_one = { v.abbr.upper() : v.letter for v in AminoAcid.items_extended }
 
     def __init__(self, seq):
         '''

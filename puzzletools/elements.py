@@ -4,12 +4,8 @@ class ChemicalElement(metaclass=EnumerationMeta):
 
     fields = ['number','symbol','name']
 
-    def __str__(self):
-        return self.symbol
+    display_key = 'symbol'
 
-    def __repr__(self):
-        return '< Element %s >'%self
-    
     data = [
         (1,'H','Hydrogen'),
         (2,'He','Helium'),
