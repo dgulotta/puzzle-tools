@@ -139,23 +139,15 @@ def parse_as_element_symbols(s):
         (1, ['Th', 'Es', 'O', 'U', 'Th'])
     '''
     s = ''.join(c for c in s if c.isalpha())
-    c1 = 1
-    p1 = []
-    c2 = 0
-    p2 = None
-    partial = [(0,None),(1,[])]
+    partial = [[] if i==0 else None for i in range(len(s)+1)]
+    count = [1 if i==0 else 0 for i in range(len(s)+1)]
     for i in range(len(s)):
-        one = s[i].title()
-        two = s[i-1:i+1].title()
-        one_works = p1 is not None and one in _short_symbols
-        two_works = p2 is not None and two in _short_symbols
-        if two_works:
-            p = p2 + [two]
-        elif one_works:
-            p = p1 + [one]
-        else:
-            p = None
-        c = c1*one_works+c2*two_works
-        c1, c2 = c, c1
-        p1, p2 = p, p1
-    return (c1,p1)
+        if count[i]:
+            for j in range(1,3):
+                if i+j<=len(s):
+                    sym = s[i:i+j].title()
+                    if sym in _short_symbols:
+                        count[i+j]+=count[i]
+                        if partial[i+j] is None:
+                            partial[i+j]=partial[i]+[sym]
+    return (count[-1],partial[-1])
