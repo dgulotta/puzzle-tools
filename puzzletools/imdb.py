@@ -14,8 +14,7 @@ current directory, run
 python imdb.py --ftp
 '''
 
-from collections import defaultdict
-from puzzletools.normalize import normalize_alnum
+from puzzletools.wordlist_util import WordlistGenerator, normalize_alnum
 import codecs, gzip, math, re, io, ftplib
 import argparse, random
 
@@ -78,16 +77,6 @@ class IMDb:
     def parse_movie(s):
         return normalize_alnum(s[:s.find(' (')])
 
-    '''
-    def open(self,s):
-        fn='%s/%s.list'%(self.idir,s)
-        try:
-            return codecs.open(fn,'r','iso-8859-1')
-        except FileNotFoundError:
-            pass
-        return gzip.open(fn+'.gz','rt',encoding='iso-8859-1')
-    '''
-
     def skip_header(self,f,s):
         for l in f:
             if l.startswith(s):
@@ -104,7 +93,7 @@ class IMDb:
                     self.counts[g[1]]=int(g[0])
 
     def do_actors(self):
-        actors = defaultdict(lambda : 0)
+        actors = WordlistGenerator()
         for s in ('actors','actresses'):
             with self.open(s) as f:
                 self.skip_header(f,'----\t')
@@ -114,14 +103,14 @@ class IMDb:
                         if g[0]:
                             name = self.parse_name(g[0])
                         if g[3]:
-                            actors[name]+=int(self.weights[int(g[3])-1]*self.counts[g[1]])
+                            actors.add(name,int(self.weights[int(g[3])-1]*self.counts[g[1]]))
                     except(AttributeError, IndexError, KeyError):
                         pass
         self.write_list('imdb_actors.txt',actors,8000)
 
     def do_movies(self):
-        movies = defaultdict(lambda : 0)
-        tv = defaultdict(lambda : 0)
+        movies = WordlistGenerator()
+        tv = WordlistGenerator()
         def add_count(k,v):
             if k.startswith('"'):
                 if k.find('{')==-1:
@@ -130,9 +119,7 @@ class IMDb:
                     return
             else:
                 d = movies
-            mn = self.parse_movie(k)
-            if v>d[mn]:
-                d[mn]=v
+            d.add(self.parse_movie(k),v,max)
         for k,v in self.counts.items():
             add_count(k,v)
         with self.open('aka-titles') as f:
@@ -152,7 +139,7 @@ class IMDb:
         self.write_list('imdb_tv.txt',tv,1200)
 
     def do_directors(self):
-        directors = defaultdict(lambda : 0)
+        directors = WordlistGenerator()
         with self.open('directors') as f:
             self.skip_header(f,'----\t')
             for l in f:
@@ -161,17 +148,13 @@ class IMDb:
                     if g[0]:
                         name = self.parse_name(g[0])
                     if g[1]:
-                        directors[name]+=self.counts[g[1]]
+                        directors.add(name,self.counts[g[1]])
                 except(AttributeError, KeyError):
                     pass
         self.write_list('imdb_directors.txt',directors,8000)
 
     def write_list(self,name,d,cutoff):
-        l = [(v,k) for k,v in d.items() if v>=cutoff]
-        l.sort(reverse=True)
-        with open('%s/%s'%(self.odir,name),'w') as f:
-            for v, k in l:
-                print("%s\t%d"%(k,v),file=f)
+        d.write('%s/%s'%(self.odir,name),cutoff)
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser()
