@@ -87,7 +87,7 @@ class MorseEncoder(encoder_base.Encoder):
         The default is ``False``.
         '''
         self.nonalnum = kwargs.get('nonalnum',False)
-        super(MorseEncoder,self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def translate_char(self,s):
         if self.nonalnum or s.isalnum():

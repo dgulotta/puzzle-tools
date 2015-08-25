@@ -5,14 +5,11 @@ class EnumerationMeta(type):
             dk = dct['display_key']
             if '__str__' not in dct:
                 def __str__(self):
-                    return getattr(self,__str__._dk)
-                __str__._dk=dk
+                    return getattr(self,dk)
                 dct['__str__']=__str__
             if '__repr__' not in dct:
                 def __repr__(self):
-                    return '< %s %s >'%(__repr__._clsname,getattr(self,__repr__._dk))
-                __repr__._clsname=name
-                __repr__._dk=dk
+                    return '< %s %s >'%(name,getattr(self,dk))
                 dct['__repr__']=__repr__
         return super().__new__(cls,name,bases,dct)
 

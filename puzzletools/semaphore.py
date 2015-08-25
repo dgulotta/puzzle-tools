@@ -67,11 +67,11 @@ class SemaphoreEncoder(encoder_base.Encoder):
         '''
         o = kwargs.get('output_mode',directions_unicode)
         self.mapping = { k : ''.join(o[directions_unicode.index(c)] for c in v) for k,v in alpha_to_semaphore.items() }
-        super(SemaphoreEncoder,self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def __call__(self,s):
         self.numeric = False
-        return super(SemaphoreEncoder,self).__call__(s)
+        return super().__call__(s)
 
     def translate_char(self,s):
         if s.isnumeric():
@@ -113,11 +113,11 @@ class SemaphoreDecoder(encoder_base.Decoder):
         '''
         i = kwargs.get('input_mode',directions_numpad)
         self.mapping = { frozenset(i[directions_unicode.index(c)] for c in k) : v for k,v in semaphore_to_alpha.items() }
-        super(SemaphoreDecoder,self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def __call__(self,s):
         self.numeric = False
-        return super(SemaphoreDecoder,self).__call__(s)
+        return super().__call__(s)
 
     def translate_char(self,s):
         c = self.mapping[frozenset(s)]

@@ -20,7 +20,7 @@ The following interactive web pages are included:
 
 Required software
 =================
-The Python modules are written in Python 3.  They are tested with version 3.3
+The Python modules are written in Python 3.  They are tested with version 3.4
 but might also work with other versions.  Some modules may use the following
 packages:
 * unidecode
