@@ -47,8 +47,8 @@ class SemaphoreEncoder(encoder_base.Encoder):
     '''encodes text to semaphore.
 
         >>> enc = SemaphoreEncoder(output_mode=directions_rogue)
-        >>> print enc('hello')
-        'HB JU BU BU HY'
+        >>> enc('hello')
+        'HB JU UB UB HY'
     '''    
 
     def __init__(self,**kwargs):
@@ -66,7 +66,7 @@ class SemaphoreEncoder(encoder_base.Encoder):
         with right.
         '''
         o = kwargs.get('output_mode',directions_unicode)
-        self.mapping = { k : ''.join(o[directions_unicode.index(c)] for c in v) for k,v in alpha_to_semaphore.items() }
+        self.mapping = { k : ''.join(o[directions_unicode.index(c)] for c in sorted(v)) for k,v in alpha_to_semaphore.items() }
         super().__init__(**kwargs)
 
     def __call__(self,s):
@@ -99,8 +99,8 @@ class SemaphoreDecoder(encoder_base.Decoder):
     Decodes text from semaphore.
     
         >>> dec = SemaphoreDecoder(input_mode=directions_numpad)
-        >>> print dec('62 19 21 23 / 34 29 61 21 48 41 47 64 29')
-        FLAG SEMAPHORE
+        >>> dec('62 19 21 23 / 34 29 61 21 48 41 47 64 29')
+        'FLAG SEMAPHORE'
     '''
 
     def __init__(self,**kwargs):
