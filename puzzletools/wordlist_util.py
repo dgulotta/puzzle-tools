@@ -5,6 +5,7 @@ import re
 _sep_re = re.compile(r'[/_\-]+')
 _alnumspace_re = re.compile(r'[^0-9A-Za-z ]')
 _spaces_re = re.compile(r'\s+')
+_nonalpha_re = re.compile(r'[^A-Z]')
 
 def normalize_alnum(s):
     s = unidecode(s).upper()
@@ -23,9 +24,24 @@ class WordlistGenerator:
         freq = int(freq)
         self.words[name]=func(self.words[name],freq)
 
-    def write(self,filename,cutoff=0):
+    def make_list(self,cutoff=0,eliminate_duplicate_slugs=True):
         l = [(v,k) for k,v in self.words.items() if v>=cutoff]
         l.sort(reverse=True)
+        if eliminate_duplicate_slugs:
+            # solvertools doesn't like it when wordlists have entries
+            # that differ by only non-alphabetic characters
+            oldl = l
+            slugs = set()
+            l = []
+            for v,k in oldl:
+                slug=_nonalpha_re.sub('',k)
+                if slug not in slugs:
+                    l.append((v,k))
+                    slugs.add(slug)
+        return l
+
+    def write(self,filename,cutoff=0,eliminate_duplicate_slugs=True):
+        l = self.make_list(cutoff,eliminate_duplicate_slugs)
         with open(filename,'w') as f:
             for v,k in l:
-                print("%s\t%d"%(k,v),file=f)
+                print("%s,%d"%(k,v),file=f)
