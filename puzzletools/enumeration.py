@@ -3,14 +3,15 @@ class EnumerationMeta(type):
     def __new__(cls,name,bases,dct):
         if 'display_key' in dct:
             dk = dct['display_key']
-            if '__str__' not in dct:
-                def __str__(self):
-                    return getattr(self,dk)
-                dct['__str__']=__str__
-            if '__repr__' not in dct:
-                def __repr__(self):
-                    return '< %s %s >'%(name,getattr(self,dk))
-                dct['__repr__']=__repr__
+            def __str__(self):
+                return getattr(self,dk)
+            dct.setdefault('__str__',__str__)
+            def __repr__(self):
+                return '< %s %s >'%(name,getattr(self,dk))
+            dct.setdefault('__repr__',__repr__)
+            def values(self):
+                return {fld : getattr(self,fld) for fld in self.fields}
+            dct.setdefault('values',values)
         return super().__new__(cls,name,bases,dct)
 
     def __init__(cls,name,bases,dct):
