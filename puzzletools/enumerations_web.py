@@ -1,8 +1,10 @@
 from puzzletools.table_parser import parse_wikitable
 from puzzletools.morse import dash_to_hyphen
 from urllib.request import urlopen
-from time import strptime
-import unicodedata
+from time import strptime, sleep
+import unicodedata, string, re
+from bs4 import BeautifulSoup
+from urllib.error import HTTPError
 
 def download_wikitable(url,tablenum=0):
     return parse_wikitable(urlopen(url),tablenum)
@@ -38,3 +40,26 @@ def currency():
 
 def languages():
     return download_wikitable('https://en.m.wikipedia.org/wiki/List_of_ISO_639-1_codes').make_enumeration('Language',[('name',2),('native_name',3),('code',4)],'name')
+
+_course_url_re = re.compile('m([0-9A-Z]+)a.html')
+_newline_strip_re = re.compile('\n.*')
+
+def mit_subject_listing():
+    entries=[]
+    soup = BeautifulSoup(urlopen('http://student.mit.edu/catalog/index.cgi'))
+    for elt in soup.find_all('a'):
+        m = _course_url_re.match(elt.attrs['href'])
+        entries.extend(mit_subject_listing_by_course(m.groups()[0]))
+    return entries
+
+def mit_subject_listing_by_course(num):
+    num=str(num)
+    entries=[]
+    for l in string.ascii_lowercase:
+        try:
+            soup=BeautifulSoup(urlopen('http://student.mit.edu/catalog/m%s%s.html'%(num,l)))
+            entries.extend(_newline_strip_re.sub('',elt.text).split(' ',1) for elt in soup.find_all('h3'))
+            sleep(1)
+        except HTTPError:
+            break
+    return entries
