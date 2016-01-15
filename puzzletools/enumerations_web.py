@@ -32,3 +32,9 @@ def zodiac():
             s='Scorpius'
         return unicodedata.lookup(s)
     return download_wikitable('https://en.m.wikipedia.org/wiki/Zodiac',1).make_enumeration('Zodiac',[('name',0),('symbol',0,lookup),('start',2,parse_date(0)),('end',2,parse_date(1))],'name')
+
+def currency():
+    return download_wikitable('https://en.m.wikipedia.org/wiki/ISO_4217').make_enumeration('Currency',[('code',0),('number',1,lambda x : int(x) if x.isnumeric() else None),('name',3),('countries',4,lambda x: [y.strip() for y in x.split(',')])],'name')
+
+def languages():
+    return download_wikitable('https://en.m.wikipedia.org/wiki/List_of_ISO_639-1_codes').make_enumeration('Language',[('name',2),('native_name',3),('code',4)],'name')
