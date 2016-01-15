@@ -42,7 +42,9 @@ class Table:
         if not all_rows:
             return table
         for elt in all_rows[0].find_all('th'):
-            table.headers.append(elt.text)
+            colspan=int(elt.attrs.get('colspan',1))
+            for n in range(colspan):
+                table.headers.append(elt.text)
         for row in all_rows:
             if not row.find('td'):
                 continue
@@ -51,7 +53,9 @@ class Table:
                 rowdata=[]
                 table.data.append(rowdata)
                 for cell in cells:
-                    rowdata.append(cell.text.strip())
+                    colspan=int(cell.attrs.get('colspan',1))
+                    for n in range(colspan):
+                        rowdata.append(cell.text.strip())
         return table
 
 def parse_wikitable(data,tablenum=0):
