@@ -14,7 +14,7 @@ current directory, run
 python imdb.py --ftp
 '''
 
-from puzzletools.wordlist_util import WordlistGenerator, normalize_alnum
+from puzzletools.wordlists.util import WordlistGenerator, normalize_alnum
 import codecs, gzip, math, re, io, ftplib
 import argparse, random
 
