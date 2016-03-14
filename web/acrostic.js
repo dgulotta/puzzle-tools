@@ -134,6 +134,36 @@ function setupClues()
 	msg = new BlankFiller(msgpat);
 	clues.setAndPropagate = setClue;
 	msg.setAndPropagate = setMsg;
+	clear_warnings()
+	if(s>0&&s!=message_to_clue.length) {
+		warn("message pattern has " + (message_to_clue.length-s) + " blanks but clues go up to " + message_to_clue.length + ".  Padding the end with extra blanks.");
+	}
+	dupes=[]
+	zeros=[]
+	for(var i=0;i<message_to_clue.length;i++) {
+		if(message_to_clue[i].length==0)
+			zeros.push(i+1);
+		else if(message_to_clue[i].length>1)
+			dupes.push(i+1);
+	}
+	if(dupes.length>0)
+		warn("the following numbers appear more than once: " + dupes);
+	if(zeros.length>0)
+		warn("the following numbers do not appear: " + zeros);
+}
+
+function clear_warnings()
+{
+	w = document.getElementById("warnings")
+	while(w.firstChild) w.removeChild(w.firstChild);
+}
+
+function warn(msg)
+{
+	p=document.createElement("p");
+	t=document.createTextNode("Warning: "+msg);
+	p.appendChild(t)
+	document.getElementById("warnings").appendChild(p);
 }
 
 function moveCursor(elt,n)
