@@ -123,8 +123,12 @@ function setupClues()
 	}
 	if(s>0) {
 		msgpat+='\b'.repeat(s);
-		for(;s>0;s--) {
+	}
+	else
+	{
+		while(s<0) {
 			message_to_clue.push([]);
+			s++;
 		}
 	}
 	msg = new BlankFiller(msgpat);
