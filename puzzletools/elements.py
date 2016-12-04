@@ -119,12 +119,12 @@ class ChemicalElement(metaclass=EnumerationMeta):
         (110,'Ds','Darmstadtium'),
         (111,'Rg','Roentgenium'),
         (112,'Cn','Copernicium'),
-        (113,'Uut','Ununtrium'),
+        (113,'Nh','Nihonium'),
         (114,'Fl','Flerovium'),
-        (115,'Uup','Ununpentium'),
+        (115,'Mc','Moscovium'),
         (116,'Lv','Livermorium'),
-        (117,'Uuh','Ununseptium'),
-        (118,'Uuo','Ununoctium'),
+        (117,'Ts','Tennessine'),
+        (118,'Og','Oganesson'),
     ]
 
 _short_symbols = { e.symbol for e in ChemicalElement.items if len(e.symbol)<=2 }
