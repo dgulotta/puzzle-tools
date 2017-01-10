@@ -5,22 +5,30 @@ Some tools for solving MIT Mystery Hunt puzzles
 
 Features
 ========
-The following Python modules are included:
-* amino - utilities for working with nucleotide and amino acid sequences
-* braille - utilities for working with Braille
-* code\_misc - other codes
-* elements - utilities for working with chemical elements and their symbols
-* imdb - generates lists of well-known actors, directors, movies, and television shows using data from IMDb
-* normalize - attempts to convert unicode strings to alphanumeric strings in a reasonable way
-* morse - translates to and from Morse code
-* semaphore - translates to and from flag semaphore
+* Codes
+	* `amino` - nucleotide and amino acid sequences
+	* `braille` - Braille
+	* `morse` - Morse code
+	* `semaphore` - flag semaphore
+	* `code_misc` - other codes (currently just military time zones)
+* Data sets
+	* `elements` - chemical elements
+	* `enumerations_web` - various data sets that can be downloaded from the web.  Includes lists of countries, US states, resistor colors, zodiac symbols, currencies, languages, and MIT classes.
+* Properties of words
+	* `word_properties` - functions for determining if a word has a particular property (e. g. being a cryptogram of a particular other word).
+* Domain-specific wordlist generators
+	* `wordlists.imdb` - generates lists of well-known actors, directors, movies, and television shows using data from IMDb
+	* `wordlist.names` - generates lists of common American first names using data from the Social Security Administration
 
 The following interactive web pages are included:
-* acrostic - an aid for solving anacrostic puzzles
+* `acrostic.html` - an aid for solving anacrostic puzzles
+
+The features are mostly orthogonal to those of [rspeer/solvertools](https://github.com/rspeer/solvertools).
 
 Required software
 =================
 The Python modules are written in Python 3.  They are tested with version 3.4
 but might also work with other versions.  Some modules may use the following
 packages:
+* beautifulsoup4
 * unidecode
