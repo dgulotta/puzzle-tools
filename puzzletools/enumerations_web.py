@@ -46,7 +46,7 @@ _newline_strip_re = re.compile('\n.*')
 
 def mit_subject_listing():
     entries=[]
-    soup = BeautifulSoup(urlopen('http://student.mit.edu/catalog/index.cgi'))
+    soup = BeautifulSoup(urlopen('http://student.mit.edu/catalog/index.cgi'),'lxml')
     for elt in soup.find_all('a'):
         m = _course_url_re.match(elt.attrs['href'])
         entries.extend(mit_subject_listing_by_course(m.groups()[0]))
@@ -57,7 +57,7 @@ def mit_subject_listing_by_course(num):
     entries=[]
     for l in string.ascii_lowercase:
         try:
-            soup=BeautifulSoup(urlopen('http://student.mit.edu/catalog/m%s%s.html'%(num,l)))
+            soup=BeautifulSoup(urlopen('http://student.mit.edu/catalog/m%s%s.html'%(num,l)),'lxml')
             entries.extend(_newline_strip_re.sub('',elt.text).split(' ',1) for elt in soup.find_all('h3'))
             sleep(1)
         except HTTPError:
