@@ -1,4 +1,4 @@
-from puzzletools.table_parser import parse_wikitable
+from puzzletools.table_parser import parse_wikitable, Table
 from puzzletools.morse import dash_to_hyphen
 from urllib.request import urlopen
 from time import strptime, sleep
@@ -6,8 +6,8 @@ import unicodedata, string, re
 from bs4 import BeautifulSoup
 from urllib.error import HTTPError
 
-def download_wikitable(url,tablenum=0):
-    return parse_wikitable(urlopen(url),tablenum)
+def download_wikitable(url,tablenum=0,fmt=None):
+    return parse_wikitable(urlopen(url),tablenum,fmt)
 
 def countries():
     return download_wikitable('https://en.m.wikipedia.org/wiki/ISO_3166-1').make_enumeration('Country',[('name',0),('alpha2',1),('alpha3',2)],'name')
@@ -63,3 +63,24 @@ def mit_subject_listing_by_course(num):
         except HTTPError:
             break
     return entries
+
+def london_underground_stations():
+    fmt={ 2 : Table.wikilink_list_format }
+    url='https://en.m.wikipedia.org/wiki/List_of_London_Underground_stations'
+    return download_wikitable(url,0,fmt).make_enumeration('LondonUnderground',[('name',0),('lines',2)],'name')
+
+def mbta_stations():
+    fmt={ 1 : Table.wikilink_list_format }
+    url='https://en.m.wikipedia.org/wiki/List_of_MBTA_subway_stations'
+    return download_wikitable(url,1,fmt).make_enumeration('MBTAStations',[('name',0),('lines',1)],'name')
+
+_paris_sep_re = re.compile(r'\s*[&,]\s*')
+
+def paris_metro_stations():
+    url='https://en.m.wikipedia.org/wiki/List_of_stations_of_the_Paris_M%C3%A9tro'
+    return download_wikitable(url).make_enumeration('ParisMetro',[('name',0),('code',2),('lines',3,lambda x: _paris_sep_re.split(x))],'name')
+
+def washington_metro_stations():
+    url='https://en.m.wikipedia.org/wiki/List_of_Washington_Metro_stations'
+    fmt={ 1 : Table.wikilink_list_format }
+    return download_wikitable(url,2,fmt).make_enumeration('WashingtonMetro',[('name',0),('lines',1)],'name')
