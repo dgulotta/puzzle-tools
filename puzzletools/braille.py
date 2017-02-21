@@ -19,14 +19,15 @@ where stars represent raised dots.  Since dots
 1,4,5 are raised, the binary representation is
 011001, or 25 in base 10.
 
-    >>> braille_converter(BrailleRepBinary,BrailleRepEnglish)(0b011001)
+    >>> from puzzletools.code import CodeConverter, Alphabet
+    >>> CodeConverter(BrailleBinary,Alphabet)(0b011001)
     'D'
-    >>> braille_converter(BrailleRepUnicode,BrailleRepBinary)('\u2819')
+    >>> CodeConverter(BrailleUnicode,BrailleBinary)('\u2819')
     25
-    >>> braille_converter(BrailleRepEnglish,BrailleRepBinary)('D')
+    >>> CodeConverter(Alphabet,BrailleBinary)('D')
     25
     >>> grid = [[1,0,0,1],[0,0,1,0],[0,0,1,0]]
-    >>> l2e = braille_converter(BrailleRepList,BrailleRepEnglish)
+    >>> l2e = CodeConverter(BrailleList,Alphabet)
     >>> [l2e(l) for l in braille_divide_grid(grid)]
     ['A', 'S']
     >>> grid[0][2] = None
@@ -34,70 +35,55 @@ where stars represent raised dots.  Since dots
     [['A'], ['P', 'S']]
 '''
 
+from puzzletools.code import Code
+
 braille_alphabet = '\u2801\u2803\u2809\u2819\u2811\u280b\u281b\u2813\u280a\u281a\u2805\u2807\u280d\u281d\u2815\u280f\u281f\u2817\u280e\u281e\u2825\u2827\u283a\u282d\u283d\u2835'
 braille_binary = [ord(ch)-0x2800 for ch in braille_alphabet]
 
-def _braille_validate_binary(s,extended=True):
-    if s<0 or s>=0x40:
-        if (not extended) or s>=0x100:
-            raise ValueError('Invalid binary Braille sequence')
-    return s
-
-class BrailleRepEnglish:
+class BrailleBinary(Code):
 
     @staticmethod
-    def to_binary(ch):
-        i = ord(ch)-0x41
+    def validate(data):
+        if data<0 or data>=0x100:
+            raise ValueError("Invalid Braille")
+
+    @staticmethod
+    def from_parent(data):
+        i = ord(data.upper())-0x41
         if i<0 or i>=26:
             raise ValueError("Invalid English letter")
         return braille_binary[i]
 
     @staticmethod
-    def from_binary(code):
-        return chr(0x41+braille_binary.index(code))
+    def to_parent(data):
+        return chr(0x41+braille_binary.index(data))
 
-class BrailleRepBinary:
+class BrailleUnicode(Code):
 
-    @staticmethod
-    def to_binary(code):
-        return code
-
-    @staticmethod
-    def from_binary(code):
-        return code
-
-class BrailleRepUnicode:
+    parent = BrailleBinary
+    list_constructor = ''.join
 
     @staticmethod
-    def to_binary(br):
-        i = ord(br)-0x2800
-        if i<0 or i>=0x100:
-            raise ValueError("Invalid Braille unicode character")
-        return i
+    def from_parent(data):
+        return chr(0x2800+data)
 
     @staticmethod
-    def from_binary(code):
-        return chr(0x2800+code)
+    def to_parent(data):
+        return ord(data)-0x2800
 
-class BrailleRepList:
+class BrailleList(Code):
+
+    parent = BrailleBinary
 
     @staticmethod
-    def to_binary(l):
+    def to_parent(l):
         if len(l)!=6 and len(l)!=8:
             raise ValueError("Invalid Braille list length")
         return sum(bool(l[i])<<i for i in range(len(l)))
 
     @staticmethod
-    def from_binary(code):
+    def from_parent(code):
         return [(code>>i)&1 for i in range(6)]
-
-def braille_converter(from_rep,to_rep,extended=True):
-    '''
-    Returns a function that converts from the Braille representation
-    ``from_rep`` to the Braille representation ``to_rep``
-    '''
-    return lambda x : to_rep.from_binary(_braille_validate_binary(from_rep.to_binary(x),extended))
-
 
 def braille_possible_letters(code,mask):
     '''
@@ -108,7 +94,7 @@ def braille_possible_letters(code,mask):
     code - the binary representation of the dots that are known to be raised
     mask - the binary representation of the dots that are known
     '''
-    return [BrailleRepEnglish.from_binary(i) for i in braille_binary if i&mask==code&mask]
+    return [BrailleBinary.to_parent(i) for i in braille_binary if i&mask==code&mask]
 
 def braille_divide_grid(grid):
     '''
@@ -125,4 +111,4 @@ def braille_list_to_binary_mask(l):
     Braille character and a mask.  True represents a raised dot, False represents a lack
     of a dot, and None represents uncertainty.
     '''
-    return (BrailleRepList.to_binary(l),sum((l[i] is not None)<<i for i in range(6)))
+    return (BrailleList.to_parent(l),sum((l[i] is not None)<<i for i in range(6)))
