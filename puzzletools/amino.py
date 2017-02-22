@@ -3,6 +3,7 @@ Utilities for working with nucleotide and amino acid sequences.
 '''
 
 from puzzletools.enumeration import EnumerationMeta
+from puzzletools.code import Code
 import re
 
 def amino_encode(s):
@@ -180,6 +181,11 @@ class AminoSequence(object):
             seq = _groups_of_three(re.sub('[^A-Z]+','',seq.upper()))
         short_seq = ''.join(AminoSequence.three_to_one[i] for i in seq)
         return AminoSequence(short_seq)
+
+class Amino(Code):
+
+    to_parent=AminoSequence.three_to_one.__getitem__
+    from_parent=AminoSequence.one_to_three.__getitem__
 
 genetic_code_tmp = (
     ('UUU' , 'PHE'),

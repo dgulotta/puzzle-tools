@@ -74,10 +74,10 @@ class CodeConverter:
     def __call__(self,value):
         try:
             return self.convert_one(value)
-        except (TypeError,ValueError):
+        except:
             try:
                 return self.convert_many(value)
-            except (TypeError,ValueError):
+            except:
                 pass
             raise
 
