@@ -10,8 +10,8 @@ from io import StringIO
 def download_wikitable(url,tablenum=0,fmt=None):
     return parse_wikitable(urlopen(url),tablenum,fmt)
 
-def download_csv(url,fmt=None):
-    return Table.from_csv(StringIO(urlopen(url).read().decode()),fmt)
+def download_csv(url,fmt=None,enc='utf-8'):
+    return Table.from_csv(StringIO(urlopen(url).read().decode(enc)),fmt)
 
 def countries():
     return download_wikitable('https://en.m.wikipedia.org/wiki/ISO_3166-1',1).make_enumeration('Country',[('name',0),('alpha2',1),('alpha3',2),('numeric',3,int),('independent',5,lambda x: x=='Yes')],'name')
@@ -104,4 +104,17 @@ def airport_codes():
         ('dst',10),
         ('timezone',11),
     ]
-    return download_csv(url).make_enumeration('AirportCode',fields,'icao')
+    return download_csv(url,enc='iso-8859-1').make_enumeration('Airport',fields,'icao')
+
+def airlines():
+    url='https://raw.githubusercontent.com/jpatokal/openflights/master/data/airlines.dat'
+    fields = [
+        ('name',1),
+        ('alias',2,lambda s: None if s==r'\N' else s),
+        ('iata',3),
+        ('icao',4),
+        ('callsign',5),
+        ('country',6),
+        ('active',7,lambda s: s=='Y'),
+    ]
+    return download_csv(url,enc='iso-8859-1').make_enumeration('Airline',fields,'callsign')

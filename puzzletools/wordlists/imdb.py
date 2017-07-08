@@ -54,7 +54,6 @@ class IMDb:
     _ftp_sites = [
         ('ftp.fu-berlin.de','/pub/misc/movies/database/'),
         ('ftp.funet.fi','/pub/mirrors/ftp.imdb.com/pub/'),
-        ('ftp.sunet.se','/pub/tv+movies/imdb/'),
     ]
 
     def __init__(self,opener,odir):
