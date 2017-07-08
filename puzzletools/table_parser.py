@@ -1,6 +1,24 @@
 from bs4 import BeautifulSoup
 from puzzletools.enumeration import EnumerationMeta
 from itertools import count
+import csv
+
+class _Formatter:
+    def __init__(self,fmt=None,fallback=None):
+        if fmt is None:
+            self.fmt={}
+        else:
+            self.fmt=fmt
+        if fallback is None:
+            self.fallback=lambda d: d
+        else:
+            self.fallback=fallback
+
+    def __call__(self,col,data):
+        if col in self.fmt:
+            return self.fmt[col](data)
+        else:
+            return self.fallback(data)
 
 class Table:
 
@@ -38,8 +56,7 @@ class Table:
 
     @staticmethod
     def from_soup(soup,fmt=None):
-        if fmt is None:
-            fmt={}
+        formatter=_Formatter(fmt,lambda c: c.text.strip())
         table=Table()
         all_rows=soup.find_all('tr')
         if not all_rows:
@@ -60,11 +77,23 @@ class Table:
                     colspan=int(cell.attrs.get('colspan',1))
                     for _ in range(colspan):
                         n=next(colcount)
-                        if n in fmt:
-                            data=fmt[n](cell)
-                        else:
-                            data=cell.text.strip()
+                        data=formatter(n,cell)
                         rowdata.append(data)
+        return table
+
+    @staticmethod
+    def from_csv(data,fmt=None,headers=False):
+        formatter=_Formatter(fmt)
+        reader=csv.reader(data)
+        table=Table()
+        if headers:
+            table.headers = next(reader)
+        for row in reader:
+            rowdata=[]
+            table.data.append(rowdata)
+            for n, cell in enumerate(row):
+                item=formatter(n,cell)
+                rowdata.append(item)
         return table
 
     @staticmethod
@@ -75,6 +104,14 @@ class Table:
             if text:
                 l.append(text)
         return l
+
+def allow_none(f):
+    def apply(n):
+        try:
+            return f(n)
+        except ValueError:
+            return None
+    return apply
 
 def parse_wikitable(data,tablenum=0,fmt=None):
     """

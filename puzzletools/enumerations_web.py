@@ -1,13 +1,17 @@
-from puzzletools.table_parser import parse_wikitable, Table
+from puzzletools.table_parser import parse_wikitable, Table, allow_none
 from puzzletools.morse import dash_to_hyphen
 from urllib.request import urlopen
 from time import strptime, sleep
 import unicodedata, string, re
 from bs4 import BeautifulSoup
 from urllib.error import HTTPError
+from io import StringIO
 
 def download_wikitable(url,tablenum=0,fmt=None):
     return parse_wikitable(urlopen(url),tablenum,fmt)
+
+def download_csv(url,fmt=None):
+    return Table.from_csv(StringIO(urlopen(url).read().decode()),fmt)
 
 def countries():
     return download_wikitable('https://en.m.wikipedia.org/wiki/ISO_3166-1',1).make_enumeration('Country',[('name',0),('alpha2',1),('alpha3',2),('numeric',3,int),('independent',5,lambda x: x=='Yes')],'name')
@@ -84,3 +88,20 @@ def washington_metro_stations():
     url='https://en.m.wikipedia.org/wiki/List_of_Washington_Metro_stations'
     fmt={ 1 : Table.wikilink_list_format }
     return download_wikitable(url,2,fmt).make_enumeration('WashingtonMetro',[('name',0),('lines',1)],'name')
+
+def airport_codes():
+    url='https://raw.githubusercontent.com/jpatokal/openflights/master/data/airports.dat'
+    fields = [
+        ('name',1),
+        ('city',2),
+        ('country',3),
+        ('iata',4),
+        ('icao',5),
+        ('latitude',6,float),
+        ('longitude',7,float),
+        ('altitude',8,int),
+        ('utcoff',9,allow_none(float)),
+        ('dst',10),
+        ('timezone',11),
+    ]
+    return download_csv(url).make_enumeration('AirportCode',fields,'icao')
