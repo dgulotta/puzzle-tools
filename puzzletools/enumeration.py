@@ -1,18 +1,11 @@
 class EnumerationMeta(type):
 
     def __new__(cls,name,bases,dct):
+        newbases = list(bases)
         if 'display_key' in dct:
-            dk = dct['display_key']
-            def __str__(self):
-                return getattr(self,dk)
-            dct.setdefault('__str__',__str__)
-            def __repr__(self):
-                return '< %s %s >'%(name,getattr(self,dk))
-            dct.setdefault('__repr__',__repr__)
-            def values(self):
-                return {fld : getattr(self,fld) for fld in self.fields}
-            dct.setdefault('values',values)
-        return super().__new__(cls,name,bases,dct)
+            newbases.append(_DisplayKey)
+        newbases.append(_Dir)
+        return super().__new__(cls,name,tuple(newbases),dct)
 
     def __init__(cls,name,bases,dct):
         super().__init__(name,bases,dct)
@@ -41,3 +34,19 @@ class EnumerationMeta(type):
 
     def __reversed__(self):
         return reversed(self.items)
+
+class _DisplayKey:
+    def _display(self):
+        return getattr(self,type(self).display_key)
+
+    def __str__(self):
+        return self._display()
+
+    def __repr__(self):
+        return '< {} {} >'.format(type(self).__name__,self._display())
+
+class _Dir:
+    def __dir__(self):
+        items = super().__dir__()
+        return [i for i in items if i in self.__dict__ or i.startswith('__')
+            or callable(getattr(self,i))]
