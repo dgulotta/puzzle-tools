@@ -36,6 +36,11 @@ class Table:
             classdict['display_key']=display_key
         return EnumerationMeta(name,(),classdict)
 
+    def merge(self,other):
+        if not self.headers:
+            self.headers=self.headers or other.headers
+        self.data.extend(other.data)
+
     @staticmethod
     def _fieldfunc(idx,fmt=lambda x: x):
         if callable(idx):
