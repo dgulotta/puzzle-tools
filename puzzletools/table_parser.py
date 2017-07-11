@@ -1,17 +1,50 @@
+"""
+Utilities for scraping data for html and csv files.  See the
+enumerations_web module for example uses.
+"""
+
 from bs4 import BeautifulSoup
 from puzzletools.enumeration import EnumerationMeta
 from io import StringIO
 import csv
 
+class Raw:
+    """
+    A tag indicating that raw HTML is being requested.
+
+        >>> t=HTMLTable.from_data('''<html><table class="wikitable">
+        ...    <tr><td>text</td></tr></table></html>''')
+        >>> next(t.rows())[0]
+        'text'
+        >>> next(t.rows())[Raw(0)]
+        <td>text</td>
+    """
+
+    def __init__(self,data):
+        self.data=data
+
+class Row:
+    def __init__(self,nodes):
+        self.nodes = nodes
+        self.text = [node.text.strip() for node in nodes]
+
+    def __getitem__(self,idx):
+        if isinstance(idx, Raw):
+            return self.nodes[idx.data]
+        else:
+            return self.text[idx]
+
+    def __iter__(self):
+        return iter(self.text)
+
+    def __len__(self):
+        return len(self.text)
+
 class HTMLTable:
     def __init__(self,node):
         self.node = node
 
-    def rows(self,fmt={}):
-        for row in self.rows_dom():
-            yield [fmt.get(n,self.parse_node)(c) for n,c in enumerate(row)]
-
-    def rows_dom(self):
+    def rows(self):
         for row in self.node.find_all('tr'):
             if not row.find('td'):
                 continue
@@ -20,11 +53,7 @@ class HTMLTable:
                 colspan=int(cell.attrs.get('colspan',1))
                 for _ in range(colspan):
                     cells.append(cell)
-            yield cells
-
-    @staticmethod
-    def parse_node(node):
-        return node.text.strip()
+            yield Row(cells)
 
     @staticmethod
     def from_data(data,tablenum=0):
@@ -58,13 +87,8 @@ def csv_rows(data,headers=False,enc='utf-8'):
         next(reader)
     yield from reader
 
-def _fieldfunc(idx,fmt=None):
-    if callable(idx):
-        return idx
-    elif fmt:
-        return lambda r: fmt(r[idx])
-    else:
-        return lambda r: r[idx]
+def _fieldfunc(idx,fmt=lambda x: x):
+    return lambda r: fmt(r[idx])
 
 def make_enumeration(name,fields,data,display_key=None):
     fieldfuncs = [_fieldfunc(*f[1:]) for f in fields]

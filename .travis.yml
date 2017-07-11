@@ -8,4 +8,4 @@ install:
   - pip install -Ue .
 
 script:
-  - nosetests -w puzzletools --with-doctest
+  - nosetests -w puzzletools --with-doctest -e tests_web

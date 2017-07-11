@@ -1,5 +1,5 @@
 from puzzletools.table_parser import (csv_rows, HTMLTable, allow_none,
-    make_enumeration)
+    make_enumeration, Raw)
 from puzzletools.morse import dash_to_hyphen
 from urllib.request import urlopen
 from time import strptime, sleep
@@ -8,8 +8,8 @@ from bs4 import BeautifulSoup
 from urllib.error import HTTPError
 import itertools
 
-def download_wikitable(url,tablenum=0,fmt={}):
-    return HTMLTable.from_data(urlopen(url).read(),tablenum).rows(fmt)
+def download_wikitable(url,tablenum=0):
+    return HTMLTable.from_data(urlopen(url).read(),tablenum).rows()
 
 def download_csv(url,headers=False,enc='utf-8'):
     return csv_rows(urlopen(url).read(),headers,enc)
@@ -71,13 +71,12 @@ def zodiac():
     return make_enumeration('Zodiac',fields,rows,'name')
 
 def currency():
-    fmt = { 4: HTMLTable.wikilink_list_format }
-    rows = download_wikitable('https://en.m.wikipedia.org/wiki/ISO_4217',fmt=fmt)
+    rows = download_wikitable('https://en.m.wikipedia.org/wiki/ISO_4217')
     fields = [
         ('code',0),
         ('number',1,int),
         ('name',3),
-        ('countries',4)]
+        ('countries',Raw(4),HTMLTable.wikilink_list_format)]
     return make_enumeration('Currency',fields,rows,'name')
 
 def languages():
@@ -109,17 +108,15 @@ def mit_subject_listing_by_course(num):
     return entries
 
 def london_underground_stations():
-    fmt = { 2 : HTMLTable.wikilink_list_format }
     url = 'https://en.m.wikipedia.org/wiki/List_of_London_Underground_stations'
-    rows = download_wikitable(url,0,fmt)
-    fields = [('name',0),('lines',2)]
+    rows = download_wikitable(url,0)
+    fields = [('name',0),('lines',Raw(2),HTMLTable.wikilink_list_format)]
     return make_enumeration('LondonUnderground',fields,rows,'name')
 
 def mbta_stations():
-    fmt = { 1 : HTMLTable.wikilink_list_format }
     url = 'https://en.m.wikipedia.org/wiki/List_of_MBTA_subway_stations'
-    rows = download_wikitable(url,1,fmt)
-    fields = [('name',0), ('lines',1)]
+    rows = download_wikitable(url,1)
+    fields = [('name',0), ('lines',Raw(1),HTMLTable.wikilink_list_format)]
     return make_enumeration('MBTAStations',fields,rows,'name')
 
 _paris_sep_re = re.compile(r'\s*[&,]\s*')
@@ -135,9 +132,8 @@ def paris_metro_stations():
 
 def washington_metro_stations():
     url='https://en.m.wikipedia.org/wiki/List_of_Washington_Metro_stations'
-    fmt = { 1 : HTMLTable.wikilink_list_format }
-    rows = download_wikitable(url,2,fmt)
-    fields = [('name',0),('lines',1)]
+    rows = download_wikitable(url,2)
+    fields = [('name',0),('lines',Raw(1),HTMLTable.wikilink_list_format)]
     return make_enumeration('WashingtonMetro',fields,rows,'name')
 
 def airport_codes():
