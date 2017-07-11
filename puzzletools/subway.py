@@ -6,7 +6,7 @@ Wikipedia.
 
 import json
 from urllib.request import urlopen
-from puzzletools.table_parser import Table
+from puzzletools.table_parser import make_enumeration
 
 _api_url='https://transit.land/api/v1/'
 
@@ -32,15 +32,18 @@ class Subway:
         """
         Returns an enumeration of this system's stations.
         """
+        return make_enumeration(cls._enum_name(),
+            [('name',0),('lines',1)],cls._rows(),'name')
+
+    @classmethod
+    def _rows(cls):
         raw=cls.stations_raw()
-        t=Table()
         validate=cls._station_validator()
         for rec in raw:
             lines=[r['route_name'] for r in rec['routes_serving_stop']]
             row=validate([rec['name'],lines])
             if row is not None:
-                t.data.append(row)
-        return t.make_enumeration(cls._enum_name(),[('name',0),('lines',1)],'name')
+                yield row
 
     @classmethod
     def stations_raw(cls):

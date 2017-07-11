@@ -1,105 +1,43 @@
 from bs4 import BeautifulSoup
 from puzzletools.enumeration import EnumerationMeta
-from itertools import count
+from io import StringIO
 import csv
 
-class _Formatter:
-    def __init__(self,fmt=None,fallback=None):
-        if fmt is None:
-            self.fmt={}
-        else:
-            self.fmt=fmt
-        if fallback is None:
-            self.fallback=lambda d: d
-        else:
-            self.fallback=fallback
+class HTMLTable:
+    def __init__(self,node):
+        self.node = node
 
-    def __call__(self,col,data):
-        if col in self.fmt:
-            return self.fmt[col](data)
-        else:
-            return self.fallback(data)
+    def rows(self,fmt={}):
+        for row in self.rows_dom():
+            yield [fmt.get(n,self.parse_node)(c) for n,c in enumerate(row)]
 
-class Table:
-
-    def __init__(self):
-        self.headers=[]
-        self.data=[]
-
-    def make_enumeration(self,name,fields,display_key=None):
-        fieldfuncs=[self._fieldfunc(*f[1:]) for f in fields]
-        classdict={
-            'fields' : [f[0] for f in fields],
-            'data' : [[f(r) for f in fieldfuncs] for r in self.data]
-        }
-        if display_key:
-            classdict['display_key']=display_key
-        return EnumerationMeta(name,(),classdict)
-
-    def merge(self,other):
-        if not self.headers:
-            self.headers=self.headers or other.headers
-        self.data.extend(other.data)
-
-    @staticmethod
-    def _fieldfunc(idx,fmt=lambda x: x):
-        if callable(idx):
-            return idx
-        else:
-            return lambda r,i=idx,f=fmt: f(r[i])
-
-    def _getdata(row,index):
-        try:
-            return row[index]
-        except IndexError:
-            pass
-        try:
-            return next(index)
-        except TypeError:
-            pass
-        raise TypeError('Expected index to be an integer or iterator')
-
-    @staticmethod
-    def from_soup(soup,fmt=None):
-        formatter=_Formatter(fmt,lambda c: c.text.strip())
-        table=Table()
-        all_rows=soup.find_all('tr')
-        if not all_rows:
-            return table
-        for elt in all_rows[0].find_all('th'):
-            colspan=int(elt.attrs.get('colspan',1))
-            for n in range(colspan):
-                table.headers.append(elt.text)
-        for row in all_rows:
+    def rows_dom(self):
+        for row in self.node.find_all('tr'):
             if not row.find('td'):
                 continue
-            cells=row.find_all(['td','th'])
-            if cells:
-                rowdata=[]
-                table.data.append(rowdata)
-                colcount=count()
-                for cell in cells:
-                    colspan=int(cell.attrs.get('colspan',1))
-                    for _ in range(colspan):
-                        n=next(colcount)
-                        data=formatter(n,cell)
-                        rowdata.append(data)
-        return table
+            cells = []
+            for cell in row.find_all(['td','th']):
+                colspan=int(cell.attrs.get('colspan',1))
+                for _ in range(colspan):
+                    cells.append(cell)
+            yield cells
 
     @staticmethod
-    def from_csv(data,fmt=None,headers=False):
-        formatter=_Formatter(fmt)
-        reader=csv.reader(data)
-        table=Table()
-        if headers:
-            table.headers = next(reader)
-        for row in reader:
-            rowdata=[]
-            table.data.append(rowdata)
-            for n, cell in enumerate(row):
-                item=formatter(n,cell)
-                rowdata.append(item)
-        return table
+    def parse_node(node):
+        return node.text.strip()
+
+    @staticmethod
+    def from_data(data,tablenum=0):
+        if isinstance(data,bytes):
+            data = data.decode()
+        if not isinstance(data,BeautifulSoup):
+            data = BeautifulSoup(data,'lxml')
+        for t in data.find_all(attrs={'style':'display:none;'}):
+            t.decompose()
+        for t in data.find_all('sup',attrs={'class':'reference'}):
+            t.decompose()
+        node=data.find_all('table',class_='wikitable')[tablenum]
+        return HTMLTable(node)
 
     @staticmethod
     def wikilink_list_format(cell):
@@ -110,6 +48,34 @@ class Table:
                 l.append(text)
         return l
 
+def csv_rows(data,headers=False,enc='utf-8'):
+    if isinstance(data,bytes):
+        data = StringIO(data.decode(enc))
+    elif isinstance(data,str):
+        data = StringIO(data)
+    reader=csv.reader(data)
+    if headers:
+        next(reader)
+    yield from reader
+
+def _fieldfunc(idx,fmt=None):
+    if callable(idx):
+        return idx
+    elif fmt:
+        return lambda r: fmt(r[idx])
+    else:
+        return lambda r: r[idx]
+
+def make_enumeration(name,fields,data,display_key=None):
+    fieldfuncs = [_fieldfunc(*f[1:]) for f in fields]
+    classdict={
+        'fields': [f[0] for f in fields],
+        'data': [[f(r) for f in fieldfuncs] for r in data]
+    }
+    if display_key:
+        classdict['display_key']=display_key
+    return EnumerationMeta(name,(),classdict)
+
 def allow_none(f):
     def apply(n):
         try:
@@ -117,16 +83,3 @@ def allow_none(f):
         except ValueError:
             return None
     return apply
-
-def parse_wikitable(data,tablenum=0,fmt=None):
-    """
-    Creates an enumeration from an HTML table generated by MediaWiki.  See
-    ``enumerations_web.py`` for example uses.
-    """
-    soup=BeautifulSoup(data,'lxml')
-    for t in soup.find_all(attrs={'style':'display:none;'}):
-        t.decompose()
-    for t in soup.find_all('sup',attrs={'class':'reference'}):
-        t.decompose()
-    elt=soup.find_all('table',class_='wikitable')[tablenum]
-    return Table.from_soup(elt,fmt)

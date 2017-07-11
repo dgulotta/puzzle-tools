@@ -1,49 +1,88 @@
-from puzzletools.table_parser import parse_wikitable, Table, allow_none
+from puzzletools.table_parser import (csv_rows, HTMLTable, allow_none,
+    make_enumeration)
 from puzzletools.morse import dash_to_hyphen
 from urllib.request import urlopen
 from time import strptime, sleep
 import unicodedata, string, re
 from bs4 import BeautifulSoup
 from urllib.error import HTTPError
-from io import StringIO
+import itertools
 
-def download_wikitable(url,tablenum=0,fmt=None):
-    return parse_wikitable(urlopen(url),tablenum,fmt)
+def download_wikitable(url,tablenum=0,fmt={}):
+    return HTMLTable.from_data(urlopen(url).read(),tablenum).rows(fmt)
 
-def download_csv(url,fmt=None,enc='utf-8',headers=False):
-    return Table.from_csv(StringIO(urlopen(url).read().decode(enc)),fmt,headers)
+def download_csv(url,headers=False,enc='utf-8'):
+    return csv_rows(urlopen(url).read(),headers,enc)
 
 def countries():
-    return download_wikitable('https://en.m.wikipedia.org/wiki/ISO_3166-1',1).make_enumeration('Country',[('name',0),('alpha2',1),('alpha3',2),('numeric',3,int),('independent',5,lambda x: x=='Yes')],'name')
+    rows = download_wikitable('https://en.m.wikipedia.org/wiki/ISO_3166-1',1)
+    fields = [
+        ('name',0),
+        ('alpha2',1),
+        ('alpha3',2),
+        ('numeric',3,int),
+        ('independent',5,lambda x: x=='Yes')]
+    return make_enumeration('Country',fields,rows,'name')
 
 def us_states():
-    return download_wikitable('https://en.m.wikipedia.org/wiki/List_of_states_and_territories_of_the_United_States').make_enumeration('State',[('name',0),('abbr',1),('capital',2),('statehood',4,lambda x: strptime(x,'%B %d, %Y'))],'name')
+    rows = download_wikitable('https://en.m.wikipedia.org/wiki/List_of_states_and_territories_of_the_United_States')
+    fields = [
+        ('name',0),
+        ('abbr',1),
+        ('capital',2),
+        ('statehood',4,lambda x: strptime(x.replace('.',''),'%b %d, %Y'))]
+    return make_enumeration('State',fields,rows,'name')
 
 def resistor_colors():
-    t=download_wikitable('https://en.m.wikipedia.org/wiki/Electronic_color_code')
-    t.data=t.data[:12]
+    rows_ext = download_wikitable('https://en.m.wikipedia.org/wiki/Electronic_color_code')
+    rows = itertools.islice(rows_ext,1,None)
     lett=lambda x : x if x.isalpha() else None
-    return t.make_enumeration('Color',[('name',0),('log_multiplier',2,lambda x: int(dash_to_hyphen(x[3:]))),('tolerance',3),('tolerance_letter',4,lett),('temp_coeff',5,lambda x: int(x) if x.isnumeric() else None),('temp_coeff_leter',6,lett)],'name')
+    fields = [
+        ('name',0),
+        ('code',1),
+        ('ral',2,allow_none(int)),
+        ('sigfig',3,allow_none(int)),
+        ('log_multiplier',4,lambda x: int(dash_to_hyphen(x[3:]))),
+        ('tolerance',6),
+        ('tolerance_letter',7,lett),
+        ('temp_coeff',8,allow_none(int)),
+        ('temp_coeff_leter',9,lett)]
+    return make_enumeration('Color',fields,rows,'name')
 
 def zodiac():
     def parse_date(n):
         def pd(d):
-            if d=='n/a':
-                return None
+            s=d.split('\u2013')
+            if len(s)==2:
+                return strptime(s[n].strip(),'%d %B')
             else:
-                return strptime(d.split('\u2013')[n].strip(),'%d %B')
+                return None
         return pd
     def lookup(s):
         if s=='Scorpio':
             s='Scorpius'
         return unicodedata.lookup(s)
-    return download_wikitable('https://en.m.wikipedia.org/wiki/Zodiac',1).make_enumeration('Zodiac',[('name',0),('symbol',0,lookup),('start',2,parse_date(0)),('end',2,parse_date(1))],'name')
+    rows = download_wikitable('https://en.m.wikipedia.org/wiki/Zodiac',1)
+    fields = [
+        ('name',0),
+        ('symbol',0,lookup),
+        ('start',2,parse_date(0)),
+        ('end',2,parse_date(1))]
+    return make_enumeration('Zodiac',fields,rows,'name')
 
 def currency():
-    return download_wikitable('https://en.m.wikipedia.org/wiki/ISO_4217').make_enumeration('Currency',[('code',0),('number',1,lambda x : int(x) if x.isnumeric() else None),('name',3),('countries',4,lambda x: [y.strip() for y in x.split(',')])],'name')
+    rows = download_wikitable('https://en.m.wikipedia.org/wiki/ISO_4217')
+    fields = [
+        ('code',0),
+        ('number',1,allow_none(int)),
+        ('name',3),
+        ('countries',4,lambda x: [y.strip() for y in x.split(',')])]
+    return make_enumeration('Currency',fields,rows,'name')
 
 def languages():
-    return download_wikitable('https://en.m.wikipedia.org/wiki/List_of_ISO_639-1_codes').make_enumeration('Language',[('name',2),('native_name',3),('code',4)],'name')
+    rows = download_wikitable('https://en.m.wikipedia.org/wiki/List_of_ISO_639-1_codes')
+    fields = [('name',2), ('native_name',3), ('code',4)]
+    return make_enumeration('Language',fields,rows,'name')
 
 _course_url_re = re.compile('m([0-9A-Z]+)a.html')
 _newline_strip_re = re.compile('\n.*')
@@ -69,28 +108,40 @@ def mit_subject_listing_by_course(num):
     return entries
 
 def london_underground_stations():
-    fmt={ 2 : Table.wikilink_list_format }
-    url='https://en.m.wikipedia.org/wiki/List_of_London_Underground_stations'
-    return download_wikitable(url,0,fmt).make_enumeration('LondonUnderground',[('name',0),('lines',2)],'name')
+    fmt = { 2 : HTMLTable.wikilink_list_format }
+    url = 'https://en.m.wikipedia.org/wiki/List_of_London_Underground_stations'
+    rows = download_wikitable(url,0,fmt)
+    fields = [('name',0),('lines',2)]
+    return make_enumeration('LondonUnderground',fields,rows,'name')
 
 def mbta_stations():
-    fmt={ 1 : Table.wikilink_list_format }
-    url='https://en.m.wikipedia.org/wiki/List_of_MBTA_subway_stations'
-    return download_wikitable(url,1,fmt).make_enumeration('MBTAStations',[('name',0),('lines',1)],'name')
+    fmt = { 1 : HTMLTable.wikilink_list_format }
+    url = 'https://en.m.wikipedia.org/wiki/List_of_MBTA_subway_stations'
+    rows = download_wikitable(url,1,fmt)
+    fields = [('name',0), ('lines',1)]
+    return make_enumeration('MBTAStations',fields,rows,'name')
 
 _paris_sep_re = re.compile(r'\s*[&,]\s*')
 
 def paris_metro_stations():
-    url='https://en.m.wikipedia.org/wiki/List_of_stations_of_the_Paris_M%C3%A9tro'
-    return download_wikitable(url).make_enumeration('ParisMetro',[('name',0),('code',2),('lines',3,lambda x: _paris_sep_re.split(x))],'name')
+    url = 'https://en.m.wikipedia.org/wiki/List_of_stations_of_the_Paris_M%C3%A9tro'
+    rows = download_wikitable(url)
+    fields = [
+        ('name',0),
+        ('code',2),
+        ('lines',3,lambda x: _paris_sep_re.split(x))]
+    return make_enumeration('ParisMetro',fields,rows,'name')
 
 def washington_metro_stations():
     url='https://en.m.wikipedia.org/wiki/List_of_Washington_Metro_stations'
-    fmt={ 1 : Table.wikilink_list_format }
-    return download_wikitable(url,2,fmt).make_enumeration('WashingtonMetro',[('name',0),('lines',1)],'name')
+    fmt = { 1 : HTMLTable.wikilink_list_format }
+    rows = download_wikitable(url,2,fmt)
+    fields = [('name',0),('lines',1)]
+    return make_enumeration('WashingtonMetro',fields,rows,'name')
 
 def airport_codes():
     url='https://raw.githubusercontent.com/jpatokal/openflights/master/data/airports.dat'
+    rows = download_csv(url,enc='iso-8859-1')
     fields = [
         ('name',1),
         ('city',2),
@@ -104,10 +155,11 @@ def airport_codes():
         ('dst',10),
         ('timezone',11),
     ]
-    return download_csv(url,enc='iso-8859-1').make_enumeration('Airport',fields,'icao')
+    return make_enumeration('Airport',fields,rows,'icao')
 
 def airlines():
     url='https://raw.githubusercontent.com/jpatokal/openflights/master/data/airlines.dat'
+    rows = itertools.islice(download_csv(url,enc='iso-8859-1'),2,None)
     fields = [
         ('name',1),
         ('alias',2,lambda s: None if s==r'\N' else s),
@@ -117,20 +169,17 @@ def airlines():
         ('country',6),
         ('active',7,lambda s: s=='Y'),
     ]
-    return download_csv(url,enc='iso-8859-1').make_enumeration('Airline',fields,'callsign')
+    return make_enumeration('Airline',fields,rows,'callsign')
 
 def _stock_table(name):
     urlbase='http://www.nasdaq.com/screening/companies-by-industry.aspx?exchange={}&render=download'
     table=download_csv(urlbase.format(name),headers=True)
-    for r in table.data:
+    for r in table:
         r[9]=name
-    return table
+        yield r
 
 def stocks():
-    urlbase='http://www.nasdaq.com/screening/companies-by-industry.aspx?exchange={}&render=download'
-    table=_stock_table('NYSE')
-    table.merge(_stock_table('NASDAQ'))
-    table.merge(_stock_table('AMEX'))
+    rows = itertools.chain(*map(_stock_table,['NYSE','NASDAQ','AMEX']))
     fields = [
         ('symbol',0),
         ('name',1),
@@ -141,4 +190,4 @@ def stocks():
         ('industry',7),
         ('exchange',9),
     ]
-    return table.make_enumeration('Stock',fields,'symbol')
+    return make_enumeration('Stock',fields,rows,'symbol')
