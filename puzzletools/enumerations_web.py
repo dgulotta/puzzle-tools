@@ -46,7 +46,7 @@ def resistor_colors():
         ('tolerance',6),
         ('tolerance_letter',7,lett),
         ('temp_coeff',8,allow_none(int)),
-        ('temp_coeff_leter',9,lett)]
+        ('temp_coeff_letter',9,lett)]
     return make_enumeration('Color',fields,rows,'name')
 
 def zodiac():
@@ -71,12 +71,13 @@ def zodiac():
     return make_enumeration('Zodiac',fields,rows,'name')
 
 def currency():
-    rows = download_wikitable('https://en.m.wikipedia.org/wiki/ISO_4217')
+    fmt = { 4: HTMLTable.wikilink_list_format }
+    rows = download_wikitable('https://en.m.wikipedia.org/wiki/ISO_4217',fmt=fmt)
     fields = [
         ('code',0),
-        ('number',1,allow_none(int)),
+        ('number',1,int),
         ('name',3),
-        ('countries',4,lambda x: [y.strip() for y in x.split(',')])]
+        ('countries',4)]
     return make_enumeration('Currency',fields,rows,'name')
 
 def languages():

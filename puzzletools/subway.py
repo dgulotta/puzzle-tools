@@ -16,6 +16,23 @@ def _make_request(query,args):
     url='{}{}?{}'.format(_api_url,query,argstr)
     return json.loads(urlopen(url).read().decode())[query]
 
+class _Adder:
+    def __init__(self):
+        self.seen = {}
+        self.data = []
+
+    # New York has duplicate station names, but the line data are wrong
+    # so deduping them isn't a big deal
+    def __call__(self,st,lines):
+        item = self.seen.get(st)
+        if item is None:
+            self.seen[st]=lines
+            self.data.append((st,lines))
+        else:
+            for l in lines:
+                if l not in item:
+                    item.append(l)
+
 class Subway:
     """
     A subway system.  The class's methods download data about the system
@@ -38,12 +55,11 @@ class Subway:
     @classmethod
     def _rows(cls):
         raw=cls.stations_raw()
-        validate=cls._station_validator()
+        adder=_Adder()
         for rec in raw:
             lines=[r['route_name'] for r in rec['routes_serving_stop']]
-            row=validate([rec['name'],lines])
-            if row is not None:
-                yield row
+            adder(cls._parse_name(rec['name']),lines)
+        return adder.data
 
     @classmethod
     def stations_raw(cls):
@@ -58,36 +74,16 @@ class Subway:
         return cls.__name__+'Station'
 
     @classmethod
-    def _station_validator(cls):
-        def validate(s):
-            s[0]=cls._parse_name(s[0])
-            return s
-        return validate
-
-    @classmethod
     def _parse_name(cls,name):
         return name
-
 
 class MBTA(Subway):
     operator = 'o-drt-mbta'
     types = 'metro,tram'
 
     @classmethod
-    def _station_validator(cls):
-        seen={}
-        def validate(s):
-            name=s[0].split(' -')[0]
-            item = seen.get(name)
-            if item is None:
-                s[0]=name
-                seen[name]=s[1]
-                return s
-            else:
-                for l in s[1]:
-                    if l not in item:
-                        item.append(l)
-        return validate
+    def _parse_name(cls,s):
+        return s.split(' -')[0]
 
 class NewYork(Subway):
     operator='o-dr5r-nyct'
