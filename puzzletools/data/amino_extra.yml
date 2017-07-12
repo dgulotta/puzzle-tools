@@ -1,0 +1,10 @@
+# special amino acids
+- [U, Sec, Selenocysteine]
+- [O, Pyl, Pyrrolysine]
+# wildcards
+- [B, Asx, 'Aspargine,Aspartic acid']
+- [Z, Glx, 'Glutamine,Glutamic acid']
+- [J, Xle, 'Leucine,Isoleucine']
+- [X, Xaa, Unknown]
+# stop codon
+- ['#', '###', Stop codon]

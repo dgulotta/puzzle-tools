@@ -11,6 +11,7 @@ Encoder and decoder for Morse code.
 
 import re
 from puzzletools.code import Code, reverse_dict
+import pkg_resources, yaml
 
 _dash_hyphen_re = re.compile('[\u2010\u2011\u2012\u2013\u2014\u2015\u2043\u2212\uff0d]')
 
@@ -22,59 +23,8 @@ def dash_to_hyphen(s):
 
 class Morse(Code):
 
-    alpha_to_morse = {
-        'A' : '.-',
-        'B' : '-...',
-        'C' : '-.-.',
-        'D' : '-..',
-        'E' : '.',
-        'F' : '..-.',
-        'G' : '--.',
-        'H' : '....',
-        'I' : '..',
-        'J' : '.---',
-        'K' : '-.-',
-        'L' : '.-..',
-        'M' : '--',
-        'N' : '-.',
-        'O' : '---',
-        'P' : '.--.',
-        'Q' : '--.-',
-        'R' : '.-.',
-        'S' : '...',
-        'T' : '-',
-        'U' : '..-',
-        'V' : '...-',
-        'W' : '.--',
-        'X' : '-..-',
-        'Y' : '-.--',
-        'Z' : '--..',
-        '0' : '-----',
-        '1' : '.----',
-        '2' : '..---',
-        '3' : '...--',
-        '4' : '....-',
-        '5' : '.....',
-        '6' : '-....',
-        '7' : '--...',
-        '8' : '---..',
-        '9' : '----.',
-        '.' : '.-.-.-',
-        ',' : '--..--',
-        ':' : '---...',
-        '?' : '..--..',
-        "'" : '.----.',
-        '-' : '-....-',
-        '/' : '-..-.',
-        '(' : '-.--.',
-        ')' : '-.--.-',
-        '"' : '.-..-.',
-        '=' : '-...-',
-        '+' : '.-.-.',
-        '@' : '.--.-.',
-        '\u00d7' : '-..-'
-    }
-
+    alpha_to_morse = data = yaml.safe_load(
+        pkg_resources.resource_stream(__name__,'data/morse.yml'))
     morse_to_alpha = reverse_dict(alpha_to_morse)
 
     to_parent = morse_to_alpha.__getitem__

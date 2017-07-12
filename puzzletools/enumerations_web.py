@@ -3,6 +3,7 @@ from puzzletools.table_parser import (csv_rows, HTMLTable, allow_none,
 from puzzletools.morse import dash_to_hyphen
 from urllib.request import urlopen
 from time import strptime, sleep
+import datetime
 import unicodedata, string, re
 from bs4 import BeautifulSoup
 from urllib.error import HTTPError
@@ -14,6 +15,9 @@ def download_wikitable(url,tablenum=0):
 def download_csv(url,headers=False,enc='utf-8'):
     return csv_rows(urlopen(url).read(),headers,enc)
 
+def strpdate(s,fmt):
+    return datetime.date(*strptime(s,fmt)[:3])
+
 def countries():
     rows = download_wikitable('https://en.m.wikipedia.org/wiki/ISO_3166-1',1)
     fields = [
@@ -24,13 +28,14 @@ def countries():
         ('independent',5,lambda x: x=='Yes')]
     return make_enumeration('Country',fields,rows,'name')
 
-def us_states():
+# these are available offline now
+def _us_states():
     rows = download_wikitable('https://en.m.wikipedia.org/wiki/List_of_states_and_territories_of_the_United_States')
     fields = [
         ('name',0),
         ('abbr',1),
         ('capital',2),
-        ('statehood',4,lambda x: strptime(x.replace('.',''),'%b %d, %Y'))]
+        ('statehood',4,lambda x: strpdate(x.replace('.',''),'%b %d, %Y'))]
     return make_enumeration('State',fields,rows,'name')
 
 def resistor_colors():
@@ -54,7 +59,7 @@ def zodiac():
         def pd(d):
             s=d.split('\u2013')
             if len(s)==2:
-                return strptime(s[n].strip(),'%d %B')
+                return strpdate(s[n].strip(),'%d %B')
             else:
                 return None
         return pd

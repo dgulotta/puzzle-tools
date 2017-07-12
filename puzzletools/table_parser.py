@@ -5,8 +5,7 @@ enumerations_web module for example uses.
 
 from bs4 import BeautifulSoup
 from puzzletools.enumeration import EnumerationMeta
-from io import StringIO
-import csv
+import csv, io
 
 class Raw:
     """
@@ -79,21 +78,38 @@ class HTMLTable:
 
 def csv_rows(data,headers=False,enc='utf-8'):
     if isinstance(data,bytes):
-        data = StringIO(data.decode(enc))
+        data = io.StringIO(data.decode(enc))
     elif isinstance(data,str):
-        data = StringIO(data)
+        data = io.StringIO(data)
+    elif isinstance(data,io.BufferedIOBase):
+        data = io.TextIOWrapper(data,encoding=enc)
     reader=csv.reader(data)
     if headers:
         next(reader)
     yield from reader
 
-def _fieldfunc(idx,fmt=lambda x: x):
-    return lambda r: fmt(r[idx])
+def _fieldfunc(n,f):
+    if isinstance(f,str):
+        return lambda r: r[n]
+    trans = lambda f: f
+    idx = n
+    for e in f[1:]:
+        if callable(e):
+            trans = e
+        else:
+            idx = e
+    return lambda r: trans(r[idx])
+
+def _fieldname(f):
+    if isinstance(f,str):
+        return f
+    else:
+        return f[0]
 
 def make_enumeration(name,fields,data,display_key=None):
-    fieldfuncs = [_fieldfunc(*f[1:]) for f in fields]
+    fieldfuncs = [_fieldfunc(n,f) for n,f in enumerate(fields)]
     classdict={
-        'fields': [f[0] for f in fields],
+        'fields': [_fieldname(f) for f in fields],
         'data': [[f(r) for f in fieldfuncs] for r in data]
     }
     if display_key:

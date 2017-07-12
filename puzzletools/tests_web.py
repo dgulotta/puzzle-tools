@@ -40,7 +40,7 @@ class WebTest(unittest.TestCase):
 
     def test_states(self):
         sleep(1)
-        self.check_data(us_states(),{
+        self.check_data(_us_states(),{
             'name': 'Massachusetts',
             'abbr': 'MA',
             'capital': 'Boston',

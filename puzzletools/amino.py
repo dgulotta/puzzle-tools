@@ -4,7 +4,7 @@ Utilities for working with nucleotide and amino acid sequences.
 
 from puzzletools.enumeration import EnumerationMeta
 from puzzletools.code import Code
-import re
+import re, pkg_resources, yaml
 
 def amino_encode(s):
     '''
@@ -97,44 +97,11 @@ class NucleotideSequence:
 class AminoAcid(metaclass=EnumerationMeta):
 
     fields = ['letter','abbr','name']
-
     display_key = 'abbr'
-
-    data = [
-        ('A','Ala','Alanine'),
-        ('C','Cys','Cysteine'),
-        ('D','Asp','Aspartic acid'),
-        ('E','Glu','Glutamic acid'),
-        ('F','Phe','Phenylalanine'),
-        ('G','Gly','Glycine'),
-        ('H','His','Histidine'),
-        ('I','Ile','Isoleucine'),
-        ('K','Lys','Lysine'),
-        ('L','Leu','Leucine'),
-        ('M','Met','Methionine'),
-        ('N','Asn','Asparagine'),
-        ('P','Pro','Proline'),
-        ('Q','Gln','Glutamine'),
-        ('R','Arg','Arginine'),
-        ('S','Ser','Serine'),
-        ('T','Thr','Threonine'),
-        ('V','Val','Valine'),
-        ('W','Trp','Tryptophan'),
-        ('Y','Tyr','Tyrosine'),
-    ]
-
-    data_extra = [
-        # special amino acids
-        ('U','Sec','Selenocysteine'),
-        ('O','Pyl','Pyrrolysine'),
-        # wildcards
-        ('B','Asx','Aspargine,Aspartic acid'),
-        ('Z','Glx','Glutamine,Glutamic acid'),
-        ('J','Xle','Leucine,Isoleucine'),
-        ('X','Xaa','Unknown'),
-        # stop codon
-        ('#','###','Stop codon')
-    ]
+    data = yaml.safe_load(
+        pkg_resources.resource_stream(__name__,'data/amino.yml'))
+    data_extra = yaml.safe_load(
+        pkg_resources.resource_stream(__name__,'data/amino_extra.yml'))
 
 class AminoSequence(object):
     '''
@@ -187,73 +154,5 @@ class Amino(Code):
     to_parent=AminoSequence.three_to_one.__getitem__
     from_parent=AminoSequence.one_to_three.__getitem__
 
-genetic_code_tmp = (
-    ('UUU' , 'PHE'),
-    ('UUC' , 'PHE'),
-    ('UUA' , 'LEU'),
-    ('UUG' , 'LEU'),
-    ('UCU' , 'SER'),
-    ('UCC' , 'SER'),
-    ('UCA' , 'SER'),
-    ('UCG' , 'SER'),
-    ('UAU' , 'TYR'),
-    ('UAC' , 'TYR'),
-    ('UAA' , '###'),
-    ('UAG' , '###'),
-    ('UGU' , 'CYS'),
-    ('UGC' , 'CYS'),
-    ('UGA' , '###'),
-    ('UGG' , 'TRP'),
-    ('CUU' , 'LEU'),
-    ('CUC' , 'LEU'),
-    ('CUA' , 'LEU'),
-    ('CUG' , 'LEU'),
-    ('CCU' , 'PRO'),
-    ('CCC' , 'PRO'),
-    ('CCA' , 'PRO'),
-    ('CCG' , 'PRO'),
-    ('CAU' , 'HIS'),
-    ('CAC' , 'HIS'),
-    ('CAA' , 'GLN'),
-    ('CAG' , 'GLN'),
-    ('CGU' , 'ARG'),
-    ('CGC' , 'ARG'),
-    ('CGA' , 'ARG'),
-    ('CGG' , 'ARG'),
-    ('AUU' , 'ILE'),
-    ('AUC' , 'ILE'),
-    ('AUA' , 'ILE'),
-    ('AUG' , 'MET'),
-    ('ACU' , 'THR'),
-    ('ACC' , 'THR'),
-    ('ACA' , 'THR'),
-    ('ACG' , 'THR'),
-    ('AAU' , 'ASN'),
-    ('AAC' , 'ASN'),
-    ('AAA' , 'LYS'),
-    ('AAG' , 'LYS'),
-    ('AGU' , 'SER'),
-    ('AGC' , 'SER'),
-    ('AGA' , 'ARG'),
-    ('AGG' , 'ARG'),
-    ('GUU' , 'VAL'),
-    ('GUC' , 'VAL'),
-    ('GUA' , 'VAL'),
-    ('GUG' , 'VAL'),
-    ('GCU' , 'ALA'),
-    ('GCC' , 'ALA'),
-    ('GCA' , 'ALA'),
-    ('GCG' , 'ALA'),
-    ('GAU' , 'ASP'),
-    ('GAC' , 'ASP'),
-    ('GAA' , 'GLU'),
-    ('GAG' , 'GLU'),
-    ('GGU' , 'GLY'),
-    ('GGC' , 'GLY'),
-    ('GGA' , 'GLY'),
-    ('GGG' , 'GLY'),
-)
-
-genetic_code = {x[0].replace('U','T') : AminoSequence.three_to_one[x[1]] for x in genetic_code_tmp}
-
-del genetic_code_tmp
+genetic_code = yaml.safe_load(
+        pkg_resources.resource_stream(__name__,'data/genetic_code.yml'))
