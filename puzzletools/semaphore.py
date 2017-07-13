@@ -10,6 +10,7 @@ Encoder and decoder for flag semaphore.
 """
 
 from puzzletools.code import Code, reverse_dict
+import pkg_resources, yaml
 
 class Direction(Code):
 
@@ -47,39 +48,11 @@ class DirectionCartesian(Direction):
 
 class StatefulSemaphoreEncoder:
 
-    alpha_to_semaphore = {
-        'A' : frozenset('\u2199\u2193'),
-        'B' : frozenset('\u2193\u2190'),
-        'C' : frozenset('\u2193\u2196'),
-        'D' : frozenset('\u2191\u2193'),
-        'E' : frozenset('\u2197\u2193'),
-        'F' : frozenset('\u2193\u2192'),
-        'G' : frozenset('\u2198\u2193'),
-        'H' : frozenset('\u2199\u2190'),
-        'I' : frozenset('\u2199\u2196'),
-        'J' : frozenset('\u2191\u2192'),
-        'K' : frozenset('\u2199\u2191'),
-        'L' : frozenset('\u2199\u2197'),
-        'M' : frozenset('\u2199\u2192'),
-        'N' : frozenset('\u2199\u2198'),
-        'O' : frozenset('\u2190\u2196'),
-        'P' : frozenset('\u2191\u2190'),
-        'Q' : frozenset('\u2197\u2190'),
-        'R' : frozenset('\u2190\u2192'),
-        'S' : frozenset('\u2198\u2190'),
-        'T' : frozenset('\u2191\u2196'),
-        'U' : frozenset('\u2197\u2196'),
-        'V' : frozenset('\u2191\u2198'),
-        'W' : frozenset('\u2197\u2192'),
-        'X' : frozenset('\u2197\u2198'),
-        'Y' : frozenset('\u2196\u2192'),
-        'Z' : frozenset('\u2198\u2192'),
-        '#' : frozenset('\u2197\u2191'),
-        '\b' : frozenset('\u2198\u2196'),
-    }
+    alpha_to_semaphore = yaml.safe_load(
+        pkg_resources.resource_stream(__name__,'data/semaphore.yml'))
 
     def __init__(self,dirs=DirectionUnicode):
-        self.mapping = { k : ''.join(dirs.from_parent(c) for c in sorted(v)) for k,v in self.alpha_to_semaphore.items() }
+        self.mapping = { k : ''.join(map(dirs.from_parent,v)) for k,v in self.alpha_to_semaphore.items() }
         self.reset()
 
     def reset(self):
@@ -105,7 +78,8 @@ class StatefulSemaphoreEncoder:
 
 class StatefulSemaphoreDecoder:
 
-    semaphore_to_alpha = reverse_dict(StatefulSemaphoreEncoder.alpha_to_semaphore)
+    semaphore_to_alpha = { frozenset(b): a for a, b
+        in StatefulSemaphoreEncoder.alpha_to_semaphore.items() }
 
     def __init__(self,dirs=DirectionPhonepad):
         self.mapping = { frozenset(dirs.from_parent(c) for c in k) : v for k,v in self.semaphore_to_alpha.items() }

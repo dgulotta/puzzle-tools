@@ -23,7 +23,7 @@ def dash_to_hyphen(s):
 
 class Morse(Code):
 
-    alpha_to_morse = data = yaml.safe_load(
+    alpha_to_morse = yaml.safe_load(
         pkg_resources.resource_stream(__name__,'data/morse.yml'))
     morse_to_alpha = reverse_dict(alpha_to_morse)
 

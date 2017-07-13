@@ -12,9 +12,9 @@ Features
 	* `semaphore` - flag semaphore
 	* `code_misc` - other codes (currently just military time zones)
 * Data sets
-	* `elements` - chemical elements
-	* `enumerations_web` - various data sets that can be downloaded from the web.  Includes lists of countries, US states, resistor colors, zodiac symbols, currencies, languages, MIT classes, subway stations, airports, airlines, and stock symbols.
-	* `subway` -  more lists of subway stations
+	* `enumerations` - data sets: chemical elements, US states
+	* `enumerations_web` - various data sets that can be downloaded from the web.  Includes lists of countries, resistor colors, zodiac symbols, currencies, languages, MIT classes, subway stations, airports, airlines, and stock symbols.
+	* `subway` -  more lists of subway stations that can be downloaded from the web
 * Properties of words
 	* `word_properties` - functions for determining if a word has a particular property (e. g. being a cryptogram of a particular other word).
 * Domain-specific wordlist generators
