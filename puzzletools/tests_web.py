@@ -4,8 +4,10 @@ data formats.
 """
 
 import unittest
-from time import sleep, strptime
+from datetime import date
+from time import sleep
 from puzzletools.enumerations_web import *
+from puzzletools.enumerations_web import _us_states
 from puzzletools.subway import *
 
 class WebTest(unittest.TestCase):
@@ -44,7 +46,7 @@ class WebTest(unittest.TestCase):
             'name': 'Massachusetts',
             'abbr': 'MA',
             'capital': 'Boston',
-            'statehood': strptime('6 Feb 1788','%d %b %Y')
+            'statehood': date(1788,2,6)
         })
 
     def test_resistors(self):
@@ -64,8 +66,8 @@ class WebTest(unittest.TestCase):
         sleep(1)
         self.check_data(zodiac(),{
             'name': 'Capricorn',
-            'start': strptime('22 Dec','%d %b'),
-            'end': strptime('20 Jan','%d %b')
+            'start': datetime.date(1900,12,22),
+            'end': datetime.date(1900,1,20)
         })
 
     def test_currency(self):

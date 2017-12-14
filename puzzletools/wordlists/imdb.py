@@ -2,11 +2,8 @@
 A script for generating a list of movies, tv shows, actors, and directors from
 text files provided by IMDb.
 
-The script can either download the IMDb text files from one of the ftp mirrors
-or use a local copy.  If you want to download the files yourself, they can be
-found at at http://www.imdb.com/interfaces#plain.
-The files that are used by this script are actors, actresses, aka-titles,
-and directors, and ratings.
+The data dumps that this program uses are no longer being updated.  See
+https://getsatisfaction.com/imdb/topics/imdb-data-now-available-in-amazon-s3.
 
 Example usage:
 To download the files from an ftp server and generate all of the lists in the
