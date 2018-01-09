@@ -49,8 +49,8 @@ class IMDb:
     _directors_re = re.compile(r'^(.*?)\t+(.*?)(?:  .*)?$')
     _aka_re = re.compile(r'^   \(aka (.*)\)\s+\(USA\)(?: \(short title\))?(?: \(imdb display title\))?$')
     _ftp_sites = [
-        ('ftp.fu-berlin.de','/pub/misc/movies/database/'),
-        ('ftp.funet.fi','/pub/mirrors/ftp.imdb.com/pub/'),
+        ('ftp.fu-berlin.de','/pub/misc/movies/database/frozendata/'),
+        ('ftp.funet.fi','/pub/mirrors/ftp.imdb.com/pub/frozendata/'),
     ]
 
     def __init__(self,opener,odir):
