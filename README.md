@@ -28,7 +28,7 @@ The features are mostly orthogonal to those of [rspeer/solvertools](https://gith
 
 Required software
 =================
-The Python modules are written in Python 3.  They are tested with version 3.4
+The Python modules are written in Python 3.  They are tested with version 3.6
 but might also work with other versions.  Some modules may use the following
 packages:
 * beautifulsoup4

@@ -2,7 +2,7 @@ from puzzletools.table_parser import (csv_rows, HTMLTable, allow_none,
     make_enumeration, Raw)
 from puzzletools.morse import dash_to_hyphen
 from urllib.request import urlopen
-from time import strptime, sleep
+from time import sleep
 import datetime
 import unicodedata, string, re
 from bs4 import BeautifulSoup
@@ -16,7 +16,7 @@ def download_csv(url,headers=False,enc='utf-8'):
     return csv_rows(urlopen(url).read(),headers,enc)
 
 def strpdate(s,fmt):
-    return datetime.date(*strptime(s,fmt)[:3])
+    return datetime.datetime.strptime(s,fmt).date()
 
 def countries():
     rows = download_wikitable('https://en.m.wikipedia.org/wiki/ISO_3166-1',1)

@@ -2,8 +2,11 @@
 A script for generating a list of movies, tv shows, actors, and directors from
 text files provided by IMDb.
 
-The data dumps that this program uses are no longer being updated.  See
-https://getsatisfaction.com/imdb/topics/imdb-data-now-available-in-amazon-s3.
+This program works with the old IMDb data format that was discontinued
+in 2017.  See https://github.com/dgulotta/wordlist_gen for a program
+that works with the current data dump format.  See
+https://getsatisfaction.com/imdb/topics/imdb-data-now-available-in-amazon-s3
+for more details about the format change.
 
 Example usage:
 To download the files from an ftp server and generate all of the lists in the

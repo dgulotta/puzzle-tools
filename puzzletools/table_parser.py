@@ -60,7 +60,7 @@ class HTMLTable:
             data = data.decode()
         if not isinstance(data,BeautifulSoup):
             data = BeautifulSoup(data,'lxml')
-        for t in data.find_all(attrs={'style':'display:none;'}):
+        for t in data.find_all(attrs={'style':'display:none;speak:none'}):
             t.decompose()
         for t in data.find_all('sup',attrs={'class':'reference'}):
             t.decompose()
