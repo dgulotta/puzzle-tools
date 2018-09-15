@@ -76,7 +76,7 @@ def zodiac():
     return make_enumeration('Zodiac',fields,rows,'name')
 
 def currency():
-    rows = download_wikitable('https://en.m.wikipedia.org/wiki/ISO_4217')
+    rows = download_wikitable('https://en.m.wikipedia.org/wiki/ISO_4217', 1)
     fields = [
         ('code',0),
         ('number',1,int),
@@ -135,10 +135,20 @@ def paris_metro_stations():
         ('lines',3,lambda x: _paris_sep_re.split(x))]
     return make_enumeration('ParisMetro',fields,rows,'name')
 
+_washington_alt_re = re.compile(r'WMATA (\w+).svg')
+
+def _washington_lines(node):
+    lines = []
+    for n in node.find_all('img'):
+        m = _washington_alt_re.match(n.attrs.get('alt',''))
+        if m:
+            lines.append(m.groups()[0])
+    return lines
+
 def washington_metro_stations():
     url='https://en.m.wikipedia.org/wiki/List_of_Washington_Metro_stations'
     rows = download_wikitable(url,2)
-    fields = [('name',0),('lines',Raw(1),HTMLTable.wikilink_list_format)]
+    fields = [('name',0),('lines',Raw(1),_washington_lines)]
     return make_enumeration('WashingtonMetro',fields,rows,'name')
 
 def airport_codes():

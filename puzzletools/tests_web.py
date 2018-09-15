@@ -113,7 +113,7 @@ class WebTest(unittest.TestCase):
         sleep(1)
         self.check_data(washington_metro_stations(),{
             'name': 'Crystal City',
-            'lines': ['Blue Line','Yellow Line'],
+            'lines': ['Blue','Yellow'],
         })
 
     def test_airport(self):
