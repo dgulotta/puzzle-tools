@@ -8,8 +8,9 @@ setup(
     version=VERSION,
     packages=find_packages(),
     install_requires=[
+        'attrs',
+        'cattrs',
         'beautifulsoup4[lxml]',
         'unidecode',
-        'PyYAML'
     ],
 )

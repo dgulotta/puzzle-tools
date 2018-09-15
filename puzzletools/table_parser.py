@@ -4,8 +4,8 @@ enumerations_web module for example uses.
 """
 
 from bs4 import BeautifulSoup
-from puzzletools.enumeration import EnumerationMeta
 import csv, io
+import typing
 
 class Raw:
     """
@@ -88,33 +88,16 @@ def csv_rows(data,headers=False,enc='utf-8'):
         next(reader)
     yield from reader
 
-def _fieldfunc(n,f):
-    if isinstance(f,str):
-        return lambda r: r[n]
-    trans = lambda f: f
-    idx = n
-    for e in f[1:]:
-        if callable(e):
-            trans = e
-        else:
-            idx = e
-    return lambda r: trans(r[idx])
-
-def _fieldname(f):
-    if isinstance(f,str):
-        return f
+def _view_item(row, idx):
+    if isinstance(idx, typing.Sequence):
+        idx, fn = idx
     else:
-        return f[0]
+        fn = lambda x: x
+    return fn(row[idx])
 
-def make_enumeration(name,fields,data,display_key=None):
-    fieldfuncs = [_fieldfunc(n,f) for n,f in enumerate(fields)]
-    classdict={
-        'fields': [_fieldname(f) for f in fields],
-        'data': [[f(r) for f in fieldfuncs] for r in data]
-    }
-    if display_key:
-        classdict['display_key']=display_key
-    return EnumerationMeta(name,(),classdict)
+def view(rows, schema):
+    for row in rows:
+        yield [_view_item(row, idx) for idx in schema]
 
 def allow_none(f):
     def apply(n):

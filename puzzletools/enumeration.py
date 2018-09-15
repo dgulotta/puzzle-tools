@@ -1,27 +1,14 @@
+import attr
+
 class EnumerationMeta(type):
 
     def __new__(cls,name,bases,dct):
-        newbases = list(bases)
-        if 'display_key' in dct:
-            newbases.append(_DisplayKey)
-        newbases.append(_Dir)
-        return super().__new__(cls,name,tuple(newbases),dct)
+        c = super().__new__(cls,name,bases,dct)
+        return attr.s(auto_attribs=True)(c)
 
     def __init__(cls,name,bases,dct):
         super().__init__(name,bases,dct)
-        if 'fields' in dct and 'data' in dct:
-            cls.items=[cls(*d) for d in cls.data]
-            cls.items_extended = cls.items+[cls(*d) for d in getattr(cls,'data_extra',[])]
-
-    def by_field(self,field_name,extras=False):
-        l = self.items_extended if extras else self.items
-        return { getattr(v,field_name) : v for v in l }
-
-    def __call__(self,*args):
-        obj = type.__call__(self)
-        for k,v in zip(self.fields,args):
-            setattr(obj,k,v)
-        return obj
+        cls._set_items([])
 
     def __iter__(self):
         return iter(self.items)
@@ -29,24 +16,22 @@ class EnumerationMeta(type):
     def __len__(self):
         return len(self.items)
 
-    def __contains__(self,item):
+    def __contains__(self):
         return item in self.items
 
     def __reversed__(self):
         return reversed(self.items)
 
-class _DisplayKey:
-    def _display(self):
-        return getattr(self,type(self).display_key)
+    def set_items_lazy(self, fn):
+        self._item_loader = fn
 
-    def __str__(self):
-        return self._display()
+    def _get_items(self):
+        if not self._items and self._item_loader:
+            self._items = self._item_loader()
+        return self._items
 
-    def __repr__(self):
-        return '< {} {} >'.format(type(self).__name__,self._display())
+    def _set_items(self, items):
+        self._items = items
+        self._item_loader = None
 
-class _Dir:
-    def __dir__(self):
-        items = super().__dir__()
-        return [i for i in items if i in self.__dict__ or i.startswith('__')
-            or callable(getattr(self,i))]
+    items = property(_get_items, _set_items)

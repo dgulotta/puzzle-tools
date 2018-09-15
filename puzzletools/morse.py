@@ -11,7 +11,7 @@ Encoder and decoder for Morse code.
 
 import re
 from puzzletools.code import Code, reverse_dict
-import pkg_resources, yaml
+from puzzletools.datafiles import load_tsv
 
 _dash_hyphen_re = re.compile('[\u2010\u2011\u2012\u2013\u2014\u2015\u2043\u2212\uff0d]')
 
@@ -23,8 +23,7 @@ def dash_to_hyphen(s):
 
 class Morse(Code):
 
-    alpha_to_morse = yaml.safe_load(
-        pkg_resources.resource_stream(__name__,'data/morse.yml'))
+    alpha_to_morse = dict(load_tsv('morse.tsv'))
     morse_to_alpha = reverse_dict(alpha_to_morse)
 
     to_parent = morse_to_alpha.__getitem__

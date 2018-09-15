@@ -10,7 +10,7 @@ Encoder and decoder for flag semaphore.
 """
 
 from puzzletools.code import Code, reverse_dict
-import pkg_resources, yaml
+from puzzletools.datafiles import load_tsv
 
 class Direction(Code):
 
@@ -48,8 +48,7 @@ class DirectionCartesian(Direction):
 
 class StatefulSemaphoreEncoder:
 
-    alpha_to_semaphore = yaml.safe_load(
-        pkg_resources.resource_stream(__name__,'data/semaphore.yml'))
+    alpha_to_semaphore = dict(load_tsv('semaphore.tsv'))
 
     def __init__(self,dirs=DirectionUnicode):
         self.mapping = { k : ''.join(map(dirs.from_parent,v)) for k,v in self.alpha_to_semaphore.items() }

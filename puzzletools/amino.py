@@ -4,7 +4,8 @@ Utilities for working with nucleotide and amino acid sequences.
 
 from puzzletools.enumeration import EnumerationMeta
 from puzzletools.code import Code
-import re, pkg_resources, yaml
+from puzzletools.datafiles import load_tsv
+import re
 
 def amino_encode(s):
     '''
@@ -95,13 +96,13 @@ class NucleotideSequence:
         return "NucleotideSequence(%s)"%repr(self.nucleotides)
 
 class AminoAcid(metaclass=EnumerationMeta):
+    letter: str
+    abbr: str
+    name: str
 
-    fields = ['letter','abbr','name']
-    display_key = 'abbr'
-    data = yaml.safe_load(
-        pkg_resources.resource_stream(__name__,'data/amino.yml'))
-    data_extra = yaml.safe_load(
-        pkg_resources.resource_stream(__name__,'data/amino_extra.yml'))
+AminoAcid.items = load_tsv('amino.tsv', AminoAcid)
+
+amino_acids_extended = AminoAcid.items + load_tsv('amino_extra.tsv', AminoAcid)
 
 class AminoSequence(object):
     '''
@@ -114,8 +115,8 @@ class AminoSequence(object):
         AminoSequence('ASDF')
     '''
 
-    one_to_three = { v.letter : v.abbr.upper() for v in AminoAcid.items_extended }
-    three_to_one = { v.abbr.upper() : v.letter for v in AminoAcid.items_extended }
+    one_to_three = { v.letter : v.abbr.upper() for v in amino_acids_extended }
+    three_to_one = { v.abbr.upper() : v.letter for v in amino_acids_extended }
 
     def __init__(self, seq):
         '''
@@ -154,5 +155,4 @@ class Amino(Code):
     to_parent=AminoSequence.three_to_one.__getitem__
     from_parent=AminoSequence.one_to_three.__getitem__
 
-genetic_code = yaml.safe_load(
-        pkg_resources.resource_stream(__name__,'data/genetic_code.yml'))
+genetic_code = dict(load_tsv('genetic_code.tsv'))

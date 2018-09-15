@@ -1,5 +1,6 @@
-from puzzletools.table_parser import (csv_rows, HTMLTable, allow_none,
-    make_enumeration, Raw)
+from puzzletools.enumeration import EnumerationMeta
+from puzzletools.enumerations import State
+from puzzletools.table_parser import csv_rows, HTMLTable, allow_none, Raw, view
 from puzzletools.morse import dash_to_hyphen
 from urllib.request import urlopen
 from time import sleep
@@ -8,6 +9,8 @@ import unicodedata, string, re
 from bs4 import BeautifulSoup
 from urllib.error import HTTPError
 import itertools
+import cattr
+from typing import Optional, Sequence
 
 def download_wikitable(url,tablenum=0):
     return HTMLTable.from_data(urlopen(url).read(),tablenum).rows()
@@ -18,43 +21,70 @@ def download_csv(url,headers=False,enc='utf-8'):
 def strpdate(s,fmt):
     return datetime.datetime.strptime(s,fmt).date()
 
-def countries():
-    rows = download_wikitable('https://en.m.wikipedia.org/wiki/ISO_3166-1',1)
-    fields = [
-        ('name',0),
-        ('alpha2',1),
-        ('alpha3',2),
-        ('numeric',3,int),
-        ('independent',5,lambda x: x=='Yes')]
-    return make_enumeration('Country',fields,rows,'name')
+def _id_hook(data, cl):
+    return data
 
-# these are available offline now
+_conv = cattr.Converter()
+_conv.register_structure_hook(datetime.date, _id_hook)
+
+def load_enumeration(cls, fields, rows):
+    return [_conv.structure_attrs_fromtuple(row, cls) for row in view(rows, fields)]
+
+class Country(metaclass=EnumerationMeta):
+    name: str
+    alpha2: str
+    alpha3: str
+    numeric: int
+    independent: bool
+
+def _countries():
+    rows = download_wikitable('https://en.m.wikipedia.org/wiki/ISO_3166-1',1)
+    fields = [ 0, 1, 2, 3, (5, lambda x: x=='Yes')]
+    return load_enumeration(Country, fields, rows)
+
+Country.set_items_lazy(_countries)
+
 def _us_states():
     rows = download_wikitable('https://en.m.wikipedia.org/wiki/List_of_states_and_territories_of_the_United_States')
-    fields = [
-        ('name',0),
-        ('abbr',1),
-        ('capital',2),
-        ('statehood',4,lambda x: strpdate(x.replace('.',''),'%b %d, %Y'))]
-    return make_enumeration('State',fields,rows,'name')
+    fields = [ 0, 1, 2, (4, lambda x: strpdate(x.replace('.',''),'%b %d, %Y')) ]
+    return load_enumeration(State,fields,rows)
 
-def resistor_colors():
+class ResistorColor(metaclass=EnumerationMeta):
+    name: str
+    code: str
+    ral: Optional[int]
+    sigfig: Optional[int]
+    log_multiplier: int
+    tolerance: str
+    tolerance_letter: Optional[str]
+    temp_coeff: Optional[int]
+    temp_coeff_letter: Optional[str]
+
+def _resistor_colors():
     rows_ext = download_wikitable('https://en.m.wikipedia.org/wiki/Electronic_color_code')
     rows = itertools.islice(rows_ext,1,None)
     lett=lambda x : x if x.isalpha() else None
     fields = [
-        ('name',0),
-        ('code',1),
-        ('ral',2,allow_none(int)),
-        ('sigfig',3,allow_none(int)),
-        ('log_multiplier',4,lambda x: int(dash_to_hyphen(x[3:]))),
-        ('tolerance',6),
-        ('tolerance_letter',7,lett),
-        ('temp_coeff',8,allow_none(int)),
-        ('temp_coeff_letter',9,lett)]
-    return make_enumeration('Color',fields,rows,'name')
+        0,
+        1,
+        (2, allow_none(int)),
+        (3, allow_none(int)),
+        (4, lambda x: int(dash_to_hyphen(x[3:]))),
+        6,
+        (7, lett),
+        (8, allow_none(int)),
+        (9, lett)]
+    return load_enumeration(ResistorColor, fields, rows)
 
-def zodiac():
+ResistorColor.set_items_lazy(_resistor_colors)
+
+class Zodiac(metaclass=EnumerationMeta):
+    name: str
+    symbol: str
+    start: datetime.date
+    end: datetime.date
+
+def _zodiac():
     def parse_date(n):
         def pd(d):
             s=d.split('\u2013')
@@ -68,26 +98,35 @@ def zodiac():
             s='Scorpius'
         return unicodedata.lookup(s)
     rows = download_wikitable('https://en.m.wikipedia.org/wiki/Zodiac',1)
-    fields = [
-        ('name',0),
-        ('symbol',0,lookup),
-        ('start',2,parse_date(0)),
-        ('end',2,parse_date(1))]
-    return make_enumeration('Zodiac',fields,rows,'name')
+    fields = [ 0, (0, lookup), (2, parse_date(0)), (2, parse_date(1)) ]
+    return load_enumeration(Zodiac,fields,rows)
 
-def currency():
+Zodiac.set_items_lazy(_zodiac)
+
+class Currency(metaclass=EnumerationMeta):
+    code: str
+    number: int
+    name: str
+    countries: Sequence[str]
+
+def _currency():
     rows = download_wikitable('https://en.m.wikipedia.org/wiki/ISO_4217', 1)
-    fields = [
-        ('code',0),
-        ('number',1,int),
-        ('name',3),
-        ('countries',Raw(4),HTMLTable.wikilink_list_format)]
-    return make_enumeration('Currency',fields,rows,'name')
+    fields = [ 0, 1, 3, (Raw(4), HTMLTable.wikilink_list_format) ]
+    return load_enumeration(Currency,fields,rows)
 
-def languages():
+Currency.set_items_lazy(_currency)
+
+class Language(metaclass=EnumerationMeta):
+    name: str
+    native_name: str
+    code: str
+
+def _language():
     rows = download_wikitable('https://en.m.wikipedia.org/wiki/List_of_ISO_639-1_codes')
-    fields = [('name',2), ('native_name',3), ('code',4)]
-    return make_enumeration('Language',fields,rows,'name')
+    fields = [2, 3, 4]
+    return load_enumeration(Language,fields,rows)
+
+Language.set_items_lazy(_language)
 
 _course_url_re = re.compile('m([0-9A-Z]+)a.html')
 _newline_strip_re = re.compile('\n.*')
@@ -112,28 +151,44 @@ def mit_subject_listing_by_course(num):
             break
     return entries
 
-def london_underground_stations():
+class LondonUnderground(metaclass=EnumerationMeta):
+    name: str
+    lines: Sequence[str]
+
+def _london_underground_stations():
     url = 'https://en.m.wikipedia.org/wiki/List_of_London_Underground_stations'
     rows = download_wikitable(url,0)
-    fields = [('name',0),('lines',Raw(2),HTMLTable.wikilink_list_format)]
-    return make_enumeration('LondonUnderground',fields,rows,'name')
+    fields = [0, (Raw(2), HTMLTable.wikilink_list_format)]
+    return load_enumeration(LondonUnderground,fields,rows)
 
-def mbta_stations():
+LondonUnderground.set_items_lazy(_london_underground_stations)
+
+class MBTAStation(metaclass=EnumerationMeta):
+    name: str
+    lines: Sequence[str]
+
+def _mbta_stations():
     url = 'https://en.m.wikipedia.org/wiki/List_of_MBTA_subway_stations'
     rows = download_wikitable(url,1)
-    fields = [('name',0), ('lines',Raw(1),HTMLTable.wikilink_list_format)]
-    return make_enumeration('MBTAStations',fields,rows,'name')
+    fields = [0, (Raw(1),HTMLTable.wikilink_list_format)]
+    return load_enumeration(MBTAStation,fields,rows)
+
+MBTAStation.set_items_lazy(_mbta_stations)
 
 _paris_sep_re = re.compile(r'\s*[&,]\s*')
 
-def paris_metro_stations():
+class ParisMetro(metaclass=EnumerationMeta):
+    name: str
+    code: str
+    lines: Sequence[str]
+
+def _paris_metro_stations():
     url = 'https://en.m.wikipedia.org/wiki/List_of_stations_of_the_Paris_M%C3%A9tro'
     rows = download_wikitable(url)
-    fields = [
-        ('name',0),
-        ('code',2),
-        ('lines',3,lambda x: _paris_sep_re.split(x))]
-    return make_enumeration('ParisMetro',fields,rows,'name')
+    fields = [0, 2, (3, lambda x: _paris_sep_re.split(x)) ]
+    return load_enumeration(ParisMetro,fields,rows)
+
+ParisMetro.set_items_lazy(_paris_metro_stations)
 
 _washington_alt_re = re.compile(r'WMATA (\w+).svg')
 
@@ -145,43 +200,66 @@ def _washington_lines(node):
             lines.append(m.groups()[0])
     return lines
 
-def washington_metro_stations():
+class WashingtonMetro(metaclass=EnumerationMeta):
+    name: str
+    lines: Sequence[str]
+
+def _washington_metro_stations():
     url='https://en.m.wikipedia.org/wiki/List_of_Washington_Metro_stations'
     rows = download_wikitable(url,2)
-    fields = [('name',0),('lines',Raw(1),_washington_lines)]
-    return make_enumeration('WashingtonMetro',fields,rows,'name')
+    fields = [0, (Raw(1),_washington_lines)]
+    return load_enumeration(WashingtonMetro,fields,rows)
 
-def airport_codes():
+WashingtonMetro.set_items_lazy(_washington_metro_stations)
+
+class Airport(metaclass=EnumerationMeta):
+    name: str
+    city: str
+    country: str
+    iata: str
+    icao: str
+    latitude: float
+    longitude: float
+    altitude: int
+    utcoff: Optional[float]
+    dst: str
+    timezone: str
+
+def _airports():
     url='https://raw.githubusercontent.com/jpatokal/openflights/master/data/airports.dat'
     rows = download_csv(url,enc='iso-8859-1')
-    fields = [
-        ('name',1),
-        ('city',2),
-        ('country',3),
-        ('iata',4),
-        ('icao',5),
-        ('latitude',6,float),
-        ('longitude',7,float),
-        ('altitude',8,int),
-        ('utcoff',9,allow_none(float)),
-        ('dst',10),
-        ('timezone',11),
-    ]
-    return make_enumeration('Airport',fields,rows,'icao')
+    fields = [ 1, 2, 3, 4, 5, 6, 7, 8, (9, allow_none(float)), 10, 11 ]
+    return load_enumeration(Airport,fields,rows)
 
-def airlines():
+Airport.set_items_lazy(_airports)
+
+class Airline(metaclass=EnumerationMeta):
+    name: str
+    alias: Optional[str]
+    iata: str
+    icao: str
+    callsign: str
+    country: str
+    active: bool
+
+def _airlines():
     url='https://raw.githubusercontent.com/jpatokal/openflights/master/data/airlines.dat'
     rows = itertools.islice(download_csv(url,enc='iso-8859-1'),2,None)
-    fields = [
-        ('name',1),
-        ('alias',2,lambda s: None if s==r'\N' else s),
-        ('iata',3),
-        ('icao',4),
-        ('callsign',5),
-        ('country',6),
-        ('active',7,lambda s: s=='Y'),
-    ]
-    return make_enumeration('Airline',fields,rows,'callsign')
+    fields = [ 1, (2, lambda s: None if s==r'\N' else s), 3, 4, 5, 6,
+        (7, lambda s: s=='Y') ]
+    return load_enumeration(Airline,fields,rows)
+
+Airline.set_items_lazy(_airlines)
+
+class Stock(metaclass=EnumerationMeta):
+    symbol: str
+    name: str
+    price: Optional[float]
+    market_cap: Optional[float]
+    ipo_yr: Optional[int]
+    sector: str
+    industry: str
+    exchange: str
 
 def _stock_table(name):
     urlbase='http://www.nasdaq.com/screening/companies-by-industry.aspx?exchange={}&render=download'
@@ -190,16 +268,10 @@ def _stock_table(name):
         r[9]=name
         yield r
 
-def stocks():
+def _stocks():
     rows = itertools.chain(*map(_stock_table,['NYSE','NASDAQ','AMEX']))
-    fields = [
-        ('symbol',0),
-        ('name',1),
-        ('price',2,allow_none(float)),
-        ('market_cap',3,allow_none(float)),
-        ('ipo_yr',5,allow_none(int)),
-        ('sector',6),
-        ('industry',7),
-        ('exchange',9),
-    ]
-    return make_enumeration('Stock',fields,rows,'symbol')
+    fields = [ 0, 1, (2, allow_none(float)), (3, allow_none(float)),
+        (5, allow_none(int)), 6, 7, 9 ]
+    return load_enumeration(Stock,fields,rows)
+
+Stock.set_items_lazy(_stocks)

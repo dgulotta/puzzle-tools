@@ -1,17 +1,21 @@
 from puzzletools.enumeration import EnumerationMeta
-import pkg_resources, yaml
+from puzzletools.datafiles import load_tsv
+import datetime
 
 class ChemicalElement(metaclass=EnumerationMeta):
-    fields = ['number','symbol','name']
-    display_key = 'symbol'
-    data = yaml.safe_load(
-        pkg_resources.resource_stream(__name__,'data/elements.yml'))
+    number: int
+    symbol: str
+    name: str
+
+ChemicalElement.items = load_tsv('elements.tsv', ChemicalElement)
 
 class State(metaclass=EnumerationMeta):
-    fields = ['name','abbr','capital','statehood']
-    display_key = 'name'
-    data = yaml.safe_load(
-        pkg_resources.resource_stream(__name__,'data/states.yml'))
+    name: str
+    abbr: str
+    capital: str
+    statehood: datetime.date
+
+State.items = load_tsv('states.tsv', State)
 
 _short_symbols = { e.symbol for e in ChemicalElement.items if len(e.symbol)<=2 }
 

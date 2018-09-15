@@ -5,8 +5,9 @@ Wikipedia.
 """
 
 import json
+import typing
 from urllib.request import urlopen
-from puzzletools.table_parser import make_enumeration
+from puzzletools.enumeration import EnumerationMeta
 
 _api_url='https://transit.land/api/v1/'
 
@@ -33,33 +34,42 @@ class _Adder:
                 if l not in item:
                     item.append(l)
 
-class Subway:
+class SubwayMeta(type):
+
+    def __init__(cls, name, bases, dct):
+        super().__init__(name, bases, dct)
+        if hasattr(cls, 'operator'):
+            ann = { 'name': str, 'lines': typing.Sequence[str] }
+            classdict = { '__annotations__': ann }
+            cls.stations = EnumerationMeta(cls._enum_name(), (), classdict)
+            cls.stations.set_items_lazy(lambda: [cls.stations(*row) for row in cls._rows()])
+
+    def _rows(cls):
+        raw=cls.stations_raw()
+        adder=_Adder()
+        for rec in raw:
+            lines=[r['route_name'] for r in rec['routes_serving_stop']]
+            adder(cls.parse_name(rec['name']),lines)
+        return adder.data
+
+    def _enum_name(cls):
+        return cls.__name__+'Station'
+
+class Subway(metaclass=SubwayMeta):
     """
     A subway system.  The class's methods download data about the system
     from Transitland.  To add a new subway system, you just need to
     subclass this class and set the `operator` variable.  To determine the
     appropriate value of this variable, go to
     https://transit.land/feed-registry.
+
+    Members:
+    operator -- the Transitland identifier for this system
+    stations -- an enumeration containing this subway system's stations
+    types -- a string denoting the types of transportation to include
     """
 
     types = 'metro'
-
-    @classmethod
-    def stations(cls):
-        """
-        Returns an enumeration of this system's stations.
-        """
-        return make_enumeration(cls._enum_name(),
-            [('name',0),('lines',1)],cls._rows(),'name')
-
-    @classmethod
-    def _rows(cls):
-        raw=cls.stations_raw()
-        adder=_Adder()
-        for rec in raw:
-            lines=[r['route_name'] for r in rec['routes_serving_stop']]
-            adder(cls._parse_name(rec['name']),lines)
-        return adder.data
 
     @classmethod
     def stations_raw(cls):
@@ -70,11 +80,10 @@ class Subway:
         return _make_request('stops',args)
 
     @classmethod
-    def _enum_name(cls):
-        return cls.__name__+'Station'
-
-    @classmethod
-    def _parse_name(cls,name):
+    def parse_name(cls,name):
+        """
+        Cleans up a station name provided by TransitLand.  The default implementation just returns `name`.
+        """
         return name
 
 class MBTA(Subway):
@@ -82,7 +91,7 @@ class MBTA(Subway):
     types = 'metro,tram'
 
     @classmethod
-    def _parse_name(cls,s):
+    def parse_name(cls,s):
         return s.split(' -')[0]
 
 class NewYork(Subway):
@@ -95,7 +104,7 @@ class Washington(Subway):
     operator='o-dqc-met'
 
     @classmethod
-    def _parse_name(cls,name):
+    def parse_name(cls,name):
         idx=name.rfind(' METRO')
         if idx>0:
             name=name[:idx]
@@ -108,5 +117,5 @@ class London(Subway):
     operator='o-gcpv-transportforlondon'
 
     @classmethod
-    def _parse_name(cls,name):
+    def parse_name(cls,name):
         return name.replace(' Underground Station','')
