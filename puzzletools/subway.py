@@ -99,6 +99,12 @@ class NewYork(Subway):
 
 class BART(Subway):
     operator='o-9q9-bart'
+    @classmethod
+    def parse_name(cls,name):
+        idx=name.rfind(' BART Station')
+        if idx>0:
+            name=name[:idx]
+        return name
 
 class Washington(Subway):
     operator='o-dqc-met'

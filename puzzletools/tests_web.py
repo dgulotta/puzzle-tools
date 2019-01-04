@@ -185,7 +185,7 @@ class WebTest(unittest.TestCase):
         sleep(1)
         self.check_data(BART.stations, {
             'name': 'Downtown Berkeley',
-            'lines': ['Warm Springs/South Fremont - Richmond', 'Richmond - Daly City/Millbrae']
+            'lines': ['Orange', 'Red']
         })
 
     def test_washington_transitland(self):
