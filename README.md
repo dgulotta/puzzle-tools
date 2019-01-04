@@ -18,7 +18,7 @@ Features
 * Properties of words
 	* `word_properties` - functions for determining if a word has a particular property (e. g. being a cryptogram of a particular other word).
 * Domain-specific wordlist generators
-	* `wordlists.imdb` - generates lists of well-known actors, directors, movies, and television shows using data from IMDb
+	* `wordlists.imdb` - generates lists of well-known actors, directors, movies, and television shows using data from IMDb (this no longer works due to IMDb changing their data format; see [dgulotta/wordlist_gen](https://github.com/dgulotta/wordlist_gen) instead)
 	* `wordlist.names` - generates lists of common American first names using data from the Social Security Administration
 
 The following interactive web pages are included:
@@ -28,5 +28,4 @@ The features are mostly orthogonal to those of [rspeer/solvertools](https://gith
 
 Required software
 =================
-The Python modules are written in Python 3.  They are tested with versions 3.5-3.6
-but might also work with other versions.
+The Python modules require Python 3.6 or later.
